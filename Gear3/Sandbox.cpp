@@ -1,101 +1,36 @@
 #include "Sandbox.h"
 #include "PitchCurve.h"
+#include "ToothMaker.h"
+#include "Gear.h"
+
 #include <QPainter>
 #include <QPainterPath>
 #include <qmath.h>
 #include <QDebug>
 
-
-class CircularToothMaker {
-
-public:
-
-  struct Params {
-    double pitchRadius;
-    int toothCount;
-    double toothHeight;
-  };
-
-
-  CircularToothMaker() {}
-
-  void makeTeeth(QVector<QVector2D> &pts, const Params &params);
-
-private:
-  QVector2D evolute(double phi, double radius) const { 
-      double cs = cos(phi), sn = sin(phi);
-      return radius * QVector2D(cs + phi*sn, sn - phi*cs);
-  }
-
-  void makeToothSide(QList<QPair<double, double> > &qs, double pitchRadius, double toothHeight);
-  void completeTooth(QList<QPair<double, double> > &qs, int toothCount);
-};
-
-void CircularToothMaker::makeToothSide(QList<QPair<double, double> > &qs, double pitchRadius, double toothHeight)
+void draw(QPainter &pa, PitchCurve *crv)
 {
-  double r0 = pitchRadius - toothHeight*0.5;
-  double r1 = pitchRadius;
-  double r2 = r0 + toothHeight;
-  struct Node { double t, r; QVector2D pos; };
-  QList<Node> nodes;
-  double t = 0.0;
-  for(;;)
-  {
-    Node node;
-    node.t = t;
-    node.pos = evolute(t, r0);
-    node.r = node.pos.length();
-    nodes.append(node);
-    if(node.r>r2) break;
-    t += 0.02;
-  }
+  QPainterPath pp;
 
-  int j = 0;
-  int m = 7;
-  for(int i=0;i<m;i++)
+  for(int i=0;i<crv->getPointCount();i++)
   {
-    double r = r0 + (r2-r0)*i/(double)(m-1);
-    if(r>r2)r=r2;
-    while(nodes[j+1].r<=r) j++;
-    double w = (r-nodes[j].r)/(nodes[j+1].r-nodes[j].r);
-    double t = nodes[j].t *(1-w) + nodes[j+1].t * w;
-    QVector2D pos = evolute(t, r0);
-    double err = fabs(r-pos.length());
-    Q_ASSERT(err<0.02);
-    double phi = atan2(pos.y(),pos.x());
-    if(phi<0.0)phi += 2*M_PI;
-    qs.append(qMakePair(phi, r));
+    const PitchCurve::Point &pt = crv->getPoint(i);
+    QPointF p = pt.pos.toPointF();
+    pp.moveTo(p);
+    pp.lineTo(p+(pt.right*20).toPointF());
   }
-  double dphi = qs[m/2].first;
-  for(int i=0;i<m;i++) qs[i].first -= dphi;
-}
+  pa.setPen(Qt::magenta);
+  pa.drawPath(pp);
 
-void CircularToothMaker::completeTooth(QList<QPair<double, double> > &qs, int toothCount)
-{
-  int m = qs.count();
-  double dphi = M_PI/(toothCount*2);
-  for(int i=0;i<m;i++) qs[i].first -= dphi;
-  for(int i=m-1;i>=0;i--)
-    qs.append(qMakePair(-qs[i].first, qs[i].second));
-  
-}
+  pp = QPainterPath();
+  pp.moveTo(crv->getPoint(0).pos.toPointF());
+  for(int i=1;i<crv->getPointCount();i++)
+    pp.lineTo(crv->getPoint(i).pos.toPointF());
+  pp.closeSubpath();
+  pa.setPen(Qt::blue);
+  pa.setBrush(Qt::NoBrush);
+  pa.drawPath(pp);
 
-void CircularToothMaker::makeTeeth(QVector<QVector2D> &pts, const Params &params)
-{
-  QList<QPair<double, double> > qs;
-  makeToothSide(qs, params.pitchRadius, params.toothHeight);
-  completeTooth(qs, params.toothCount);
-  int n = params.toothCount;
-  for(int i=0;i<n;i++)
-  {
-    double phiOff = 2*M_PI*i/n;
-    for(int j=0;j<qs.count();j++)
-    {
-      double phi = phiOff + qs[j].first;
-      double r = qs[j].second;
-      pts.append(r*QVector2D(cos(phi), sin(phi)));
-    }
-  }
 }
 
 
@@ -104,7 +39,8 @@ void CircularToothMaker::makeTeeth(QVector<QVector2D> &pts, const Params &params
 
 struct Sandbox::Imp {
   double parameter;
-  PitchCurve *curve;
+  // PitchCurve *curve;
+  Gear *m_gear;
 
 };
 
@@ -112,11 +48,33 @@ Sandbox::Sandbox()
   : m_imp(new Imp)
 {
   m_imp->parameter = 0.0;
+  // testPitchCurve();
+  /*
   double r=200.0, e = 0.6;
-
   PitchCurve *crv = m_imp->curve = new PitchCurve(EllipseFunction(r,e),200);
   double err = crv->getLength() - EllipseFunction::computePerimeter(r,e);
   qDebug() << "Err = " << err; // 0.137783; -0.0300675
+  */
+  /*
+  double r=600.0, corner = 20;
+  PitchCurve *crv = m_imp->curve = new PitchCurve(SquareFunction(r,corner),200);
+  double err = crv->getLength() - SquareFunction::computePerimeter(r,corner);
+  qDebug() << "Err = " << err; // 0.137783; -0.0300675
+  */
+  // PitchCurve *crv = m_imp->curve = new PitchCurve(SpiralFunction(100,200),200);
+
+  Gear *gear = new Gear(new PitchCurve(SpiralFunction(100,200)));
+  QVector<QVector2D> pts;
+  SimpleToothMaker::Params params;
+  params.toothLength = 50;
+  params.toothHeight = 30;
+  SimpleToothMaker().makeTeeth(pts, gear->getCurve(), params);
+  gear->setBodyPath(pts);
+
+  m_imp->m_gear = gear;
+
+
+  
 }
 
 Sandbox::~Sandbox()
@@ -141,6 +99,27 @@ void Sandbox::paint(QPainter &pa)
   pa.drawLine(-r,0,r,0);
   pa.drawLine(0,-r,0,r);
 
+  m_imp->m_gear->draw(pa);
+
+  /*
+
+  draw(pa, m_imp->curve);
+
+  QVector<QVector2D> pts;
+  SimpleToothMaker::Params params;
+  params.toothLength = 50;
+  params.toothHeight = 30;
+
+  SimpleToothMaker().makeTeeth(pts, m_imp->curve, params);
+
+  QPainterPath pp;
+  pp.moveTo(pts[0].toPointF());
+  for(int i=1;i<pts.count();i++) pp.lineTo(pts[i].toPointF());
+  pa.setPen(Qt::black);
+  pa.setBrush(Qt::yellow);
+  pa.drawPath(pp);
+  */
+
 
   /*
 
@@ -163,19 +142,24 @@ void Sandbox::paint(QPainter &pa)
   pa.setPen(Qt::cyan);
   pa.drawPath(pp);
   */
-  int n1 = 23, n2 = 23;
+
+  /*
+  int n1 = 23, n2 = 43;
   double r1 = 300.0, r2 = r1*n2/n1;
+  double alpha = 20 * M_PI/180.0;
+  double csAlpha = cos(alpha);
 
   CircularToothMaker ctm;
   CircularToothMaker::Params params;
 
-  params.toothHeight = 40;
+  params.toothHeight = 2 * r1 * (1-csAlpha);
   params.pitchRadius = r1;
   params.toothCount = n1;
 
   QVector<QVector2D> pts1, pts2;  
   ctm.makeTeeth(pts1, params);
 
+  params.toothHeight = 2 * r2 * (1-csAlpha);
   params.pitchRadius = r2;
   params.toothCount = n2;
   ctm.makeTeeth(pts2, params);
@@ -196,7 +180,7 @@ void Sandbox::paint(QPainter &pa)
   for(int i=0;i<2;i++)
   {
     pa.save();
-    pa.translate(-(r1+r2)*i,0);
+    pa.translate(i==0 ? r1 : -r2, 0);
     pa.rotate(i==0 ? rotation : -rotation*n1/n2);
     pa.setPen(Qt::black);
     pa.setBrush(Qt::cyan);
@@ -212,7 +196,11 @@ void Sandbox::paint(QPainter &pa)
 
 
   pa.setPen(Qt::black);
-  pa.drawLine(-(r1+r2),0,0,0);
+  pa.drawLine(-r2, 0, r1, 0);
+  pa.drawLine(-sin(alpha)*300, -300, sin(alpha)*300,300);
+  */
+
+
   /*
 
   double r0 = 300;

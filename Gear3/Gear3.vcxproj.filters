@@ -56,6 +56,12 @@
     <ClCompile Include="Sandbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ToothMaker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Gear.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="gear3.qrc">
@@ -70,6 +76,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sandbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ToothMaker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Gear.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

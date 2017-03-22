@@ -25,6 +25,16 @@ public:
   static double computePerimeter(double e, double r);
 };
 
+class SpiralFunction : public CurveFunction {
+  double m_r0, m_r1;
+public:
+  SpiralFunction(double r0, double r1) : m_r0(r0), m_r1(r1) {}
+  QVector2D operator()(double t) const;
+};
+
+
+//=============================================================================
+
 class PitchCurve
 {
 public:
@@ -36,15 +46,38 @@ public:
 private:
   QVector<Point> m_pts;
   double m_length;
+  bool m_isOpen;
 
 public:
   PitchCurve(const CurveFunction &f, int n = 500);
   ~PitchCurve();
 
+  bool isOpen() const { return m_isOpen; }
   double getLength() const { return m_length; }
   
   int getPointCount() const { return m_pts.count(); }
   const Point &getPoint(int index) const { return m_pts[index]; }
+
+  double getPhiFromS(double s) const;
+  double getSFromPhi(double phi) const;
+
+  double getRFromS(double s) const;
+  double getRFromPhi(double phi) const;
+
+  QVector2D getPosFromS(double s, double y = 0.0) const;
+  QVector2D getPosFromPhi(double phi) const;
+
+  // for close curves
+  void getIndexFromS(double s, int &a, int &b, int &q, double &t) const;
+  void getIndexFromPhi(double phi, int &a, int &b, int &q, double &t) const;
+
+  // for open curves
+  void getIndexFromS(double s, int &a, int &b, double &t) const;
+  void getIndexFromPhi(double phi, int &a, int &b, double &t) const;
+
 };
+
+
+void testPitchCurve();
 
 
