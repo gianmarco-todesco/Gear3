@@ -85,7 +85,9 @@ double SquareFunction::computePerimeter(double e, double r)
 QVector2D SpiralFunction::operator()(double t) const
 { 
   double phi = 2*M_PI*t; 
-  return (m_r0 * (1-t) + m_r1 * t) * QVector2D(cos(phi), sin(phi));
+  double r = m_r0 * exp(t * log(m_r1/m_r0) );
+  return r * QVector2D(cos(phi), sin(phi));
+  // return (m_r0 * (1-t) + m_r1 * t) * QVector2D(cos(phi), sin(phi));
 } 
 
 
@@ -181,14 +183,14 @@ double PitchCurve::getSFromPhi(double phi) const
 {
   int a,b,q; double t;
   if(m_isOpen) {
-    getIndexFromS(phi, a,b, t);
+    getIndexFromPhi(phi, a,b, t);
     if(a<0) return m_pts[b].s;
     else if(b<0) return m_pts[a].s;
     else return m_pts[a].s*(1-t) + m_pts[b].s*t;
   }
   else
   {
-    getIndexFromS(phi, a,b, q, t);
+    getIndexFromPhi(phi, a,b, q, t);
     return m_pts[a].s*(1-t) + (b==0 ? m_length : m_pts[b].s)*t + q*m_length;
   }
 }
@@ -318,32 +320,38 @@ void PitchCurve::getIndexFromS(double s, int &a, int &b, double &t) const
 {
   if(s<=0.0) { a=-1; b=0; t = 0; }
   else if(s>=m_length) { a=m_pts.count()-1; b=-1; t=0; }
-  a=0;
-  b=m_pts.count()-1;
-  Q_ASSERT(m_pts[a].s<=s && s<m_pts[b].s);
-  while(b-a>1) 
+  else
   {
-    int c = (a+b)/2;
-    if(m_pts[c].s<=s)a=c; else b=c;
+    a=0;
+    b=m_pts.count()-1;
+    Q_ASSERT(m_pts[a].s<=s && s<m_pts[b].s);
+    while(b-a>1) 
+    {
+      int c = (a+b)/2;
+      if(m_pts[c].s<=s)a=c; else b=c;
+    }
+    Q_ASSERT(m_pts[a].s<=s && s<m_pts[b].s);
+    t = (s-m_pts[a].s)/(m_pts[b].s-m_pts[a].s);  
   }
-  Q_ASSERT(m_pts[a].s<=s && s<m_pts[b].s);
-  t = (s-m_pts[a].s)/(m_pts[b].s-m_pts[a].s);  
 }
 
 void PitchCurve::getIndexFromPhi(double phi, int &a, int &b, double &t) const
 {
   if(phi<0.0) { a=-1; b=0; t = 0; }
   else if(phi>=m_pts.back().phi) { a=m_pts.count()-1; b=-1; t=0; }
-  a=0;
-  b=m_pts.count()-1;
-  Q_ASSERT(m_pts[a].phi<=phi && phi<m_pts[b].phi);
-  while(b-a>1) 
+  else
   {
-    int c = (a+b)/2;
-    if(m_pts[c].phi<=phi)a=c; else b=c;
+    a=0;
+    b=m_pts.count()-1;
+    Q_ASSERT(m_pts[a].phi<=phi && phi<m_pts[b].phi);
+    while(b-a>1) 
+    {
+      int c = (a+b)/2;
+      if(m_pts[c].phi<=phi)a=c; else b=c;
+    }
+    Q_ASSERT(m_pts[a].phi<=phi && phi<m_pts[b].phi);
+    t = (phi-m_pts[a].phi)/(m_pts[b].phi-m_pts[a].phi);
   }
-  Q_ASSERT(m_pts[a].phi<=phi && phi<m_pts[b].phi);
-  t = (phi-m_pts[a].phi)/(m_pts[b].phi-m_pts[a].phi);
 }
 
 //=============================================================================

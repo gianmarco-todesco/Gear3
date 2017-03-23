@@ -1,5 +1,6 @@
 #include "Gear.h"
 #include "PitchCurve.h"
+#include <qmath.h>
 
 
 Gear::Gear(PitchCurve *curve) 
@@ -16,6 +17,10 @@ Gear::~Gear()
 
 void Gear::draw(QPainter &pa)
 {
+  pa.save();
+  pa.translate(getPosition());
+  pa.rotate(getAngle()*180.0/M_PI);
+
   pa.setPen(QPen(Qt::blue, 2));
   pa.setBrush(Qt::cyan);
   pa.drawPath(m_bodyPath);
@@ -23,6 +28,7 @@ void Gear::draw(QPainter &pa)
   pa.setPen(QPen(Qt::magenta, 0, Qt::DotLine));
   pa.setBrush(Qt::NoBrush);
   pa.drawPath(m_pitchLinePath);
+  pa.restore();
 }
 
 
@@ -48,4 +54,38 @@ void Gear::updatePitchPath()
     s += ds;
   }
 }
+
+
+GearLink::GearLink(Gear*driver, Gear *driven) : m_driver(driver), m_driven(driven) 
+{
+}
+
+GearLink::~GearLink()
+{
+}
+
+void GearLink::update()
+{
+  const PitchCurve *driverCrv = m_driver->getCurve();
+  const PitchCurve *drivenCrv = m_driven->getCurve();
+  
+  /*
+  QPointF p = m_driven->getPosition() - m_driver->getPosition();
+  double psi = atan2(p.y(),p.x()); if(psi<0)psi+=2*M_PI;
+  double s = driverCrv->getSFromPhi(M_PI*0) - driverCrv->getSFromPhi(psi-m_driver->getAngle());
+  m_driven->setAngle(drivenCrv->getPhiFromS(-s) + psi - M_PI); 
+  */
+
+  double driverPhi0 = M_PI;
+  double drivenPhi0 = 0;
+
+  double driverAngle = m_driver->getAngle();
+  double s = driverCrv->getSFromPhi(M_PI - driverPhi0) - driverCrv->getSFromPhi(M_PI - driverAngle);
+
+  double q = drivenCrv->getSFromPhi(- drivenPhi0);
+  double drivenAngle = drivenCrv->getPhiFromS(drivenCrv->getLength() + s + q);
+  m_driven->setAngle(-drivenAngle);
+
+}
+
 

@@ -22,6 +22,7 @@ public:
 
   QPointF getPosition() const { return m_position; }
   void setPosition(const QPointF &p) { m_position = p; }
+  void setPosition(double x, double y) { m_position = QPointF(x,y); }
 
   double getAngle() const { return m_angle; }
   void setAngle(double angle) { m_angle = angle; }
@@ -34,4 +35,14 @@ public:
 
 private:
   void updatePitchPath();
+};
+
+
+
+class GearLink {
+  Gear *m_driver, *m_driven;
+public:
+  GearLink(Gear*driver, Gear *driven);
+  ~GearLink();
+  void update();
 };
