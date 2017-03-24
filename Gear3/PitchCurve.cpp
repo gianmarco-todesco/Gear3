@@ -249,6 +249,34 @@ QVector2D PitchCurve::getPosFromS(double s, double y) const
   return pos;
 }
 
+PitchCurve::Point PitchCurve::getPointFromS(double s) const
+{
+  Point pt;
+  int a,b,q; double t;
+  pt.s = s;
+  if(m_isOpen) {
+    getIndexFromS(s, a,b, t);
+    if(a<0) { pt= m_pts[b]; }
+    else if(b<0) {pt = m_pts[a]; }
+    else { 
+      pt.pos = m_pts[a].pos*(1-t) + m_pts[b].pos*t; 
+      pt.right =  (m_pts[a].right*(1-t) + m_pts[b].right*t).normalized(); 
+      pt.r = m_pts[a].r*(1-t) + m_pts[b].r*t; 
+      pt.phi = m_pts[a].phi*(1-t) + m_pts[b].phi*t; 
+    }
+  }
+  else
+  {
+    getIndexFromS(s, a,b, q, t);
+    pt.pos = m_pts[a].pos*(1-t) + m_pts[b].pos*t; 
+    pt.right =  (m_pts[a].right*(1-t) + m_pts[b].right*t).normalized(); 
+    pt.r = m_pts[a].r*(1-t) + m_pts[b].r*t; 
+    pt.phi = m_pts[a].phi*(1-t) + (b==0 ? 2*M_PI : m_pts[b].phi)*t; 
+  }
+  return pt;
+}
+
+
 QVector2D PitchCurve::getPosFromPhi(double phi) const
 {
   int a,b,q; double t;

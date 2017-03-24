@@ -67,6 +67,8 @@ public:
   QVector2D getPosFromS(double s, double y = 0.0) const;
   QVector2D getPosFromPhi(double phi) const;
 
+  Point getPointFromS(double s) const;
+
   // for close curves
   void getIndexFromS(double s, int &a, int &b, int &q, double &t) const;
   void getIndexFromPhi(double phi, int &a, int &b, int &q, double &t) const;

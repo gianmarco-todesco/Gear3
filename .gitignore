@@ -2,6 +2,7 @@
 *.sdf
 *.suo
 Debug
+Release
 GeneratedFiles
 win32
 ipch

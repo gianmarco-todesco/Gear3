@@ -2,11 +2,14 @@
 #include "PitchCurve.h"
 #include "ToothMaker.h"
 #include "Gear.h"
+#include "ClipperWrapper.h"
 
 #include <QPainter>
 #include <QPainterPath>
 #include <qmath.h>
 #include <QDebug>
+#include <qmatrix.h>
+#include <QElapsedTimer>
 
 void draw(QPainter &pa, PitchCurve *crv)
 {
@@ -36,18 +39,72 @@ void draw(QPainter &pa, PitchCurve *crv)
 
 //=========================================================================================================
 
+class Uff {
+public:
+  PitchCurve *m_curve;
+
+  Uff() {
+    m_curve = new PitchCurve(EllipseFunction(400, 0.6));
+  }
+
+  void draw(QPainter &pa);
+
+};
+ 
+void Uff::draw(QPainter &pa)
+{
+  QPainterPath pp;
+  pp.moveTo(m_curve->getPoint(0).pos.toPointF());
+  for(int i=1;i<m_curve->getPointCount();i++) pp.lineTo(m_curve->getPoint(i).pos.toPointF());
+  pa.setPen(Qt::magenta);
+  pa.drawPath(pp);
+
+  pp = QPainterPath();
+  int m = 100;
+  double ds = 10;
+  for(int i=0;i<m_curve->getLength()/ds;i++)
+  {
+    double s = i*ds;
+    PitchCurve::Point pt = m_curve->getPointFromS(s);
+    QPointF pos = pt.pos.toPointF();
+    QMatrix matrix;
+    matrix.translate(pos.x(),pos.y());
+    matrix.rotate(-90+180.0*atan2(pt.right.y(), pt.right.x())/M_PI);
+
+    int k = floor(s/100.0);
+    matrix.translate(s - k*100.0,0);
+    pp.moveTo(matrix.map(QPointF(100,100)));
+    pp.lineTo(matrix.map(QPointF(0,0)));
+    pp.lineTo(matrix.map(QPointF(-100,100)));
+    
+    //pp.moveTo(pos);
+    //pp.lineTo((pt.pos + 100*pt.right).toPointF());
+
+  }
+  pa.setPen(Qt::red);
+  pa.drawPath(pp);
+}
+
+
+//=========================================================================================================
+
 
 struct Sandbox::Imp {
   double parameter;
   // PitchCurve *curve;
   Gear *m_gear1, *m_gear2;
+  Uff *m_uff;
 
+  void drawMalteseCross(QPainter &pa);
+  void foo(QPainter &pa);
+  void foo2(QPainter &pa) { m_uff->draw(pa); }
 };
 
 Sandbox::Sandbox()
   : m_imp(new Imp)
 {
   m_imp->parameter = 0.0;
+  m_imp->m_uff = new Uff;
   // testPitchCurve();
   /*
   double r=200.0, e = 0.6;
@@ -98,27 +155,10 @@ double Sandbox::getParameter() const
   return m_imp->parameter;
 }
 
-void Sandbox::paint(QPainter &pa)
+
+
+void Sandbox::Imp::drawMalteseCross(QPainter &pa)
 {
-  pa.setPen(Qt::gray);
-  double r = 500;
-  pa.drawLine(-r,0,r,0);
-  pa.drawLine(0,-r,0,r);
-
-
-  /*
-  m_imp->m_gear1->setAngle(M_PI - getParameter()*0.01);
-
-  GearLink(m_imp->m_gear1, m_imp->m_gear2).update();
-
-  
-  m_imp->m_gear1->draw(pa);
-  m_imp->m_gear2->draw(pa);
-  */
-
-
-
-
 
 
   double r0 = 60, r1 = 200, d = 20;
@@ -126,7 +166,7 @@ void Sandbox::paint(QPainter &pa)
 
   double r2 = r1 + 50;
 
-  double angle1 = getParameter();
+  double angle1 = parameter;
 
   pa.save();
   pa.translate(r1,r1);
@@ -202,6 +242,132 @@ void Sandbox::paint(QPainter &pa)
   pa.restore();
 
   
+}
+
+//================================================================================
+
+void Sandbox::Imp::foo(QPainter &pa)
+{
+  ClipperWrapper clpr;
+
+  double phi = parameter;
+  
+  pa.save();
+  pa.translate(0,300);
+
+  int n = 150;
+
+  QElapsedTimer timer;
+  timer.start();
+    
+  QPointF oldp0, oldp1, oldp2;
+
+  for(int i=0;i<n;i++)
+  {
+    QMatrix matrix;
+    matrix.rotate(360*i/n);
+    matrix.translate(200,0);
+    matrix.rotate(720*i/n);
+    
+    QPointF p0 = matrix.map(QPointF(-100,-25));
+    QPointF p1 = matrix.map(QPointF(-100, 25));
+    QPointF p2 = matrix.map(QPointF( 100, 0));
+
+    clpr.add(p0,p1,p2);
+    if(i>0)
+    {
+      clpr.add(p0,p1,oldp0);
+      clpr.add(p1,p2,oldp1);
+      clpr.add(p2,p0,oldp2);
+      clpr.add(p0,oldp0,oldp1);
+      clpr.add(p1,oldp1,oldp2);
+      clpr.add(p2,oldp2,oldp0);
+    }
+    oldp0 = p0;
+    oldp1 = p1;
+    oldp2 = p2;
+
+  }
+
+  qDebug() << timer.elapsed();
+    
+  QPainterPath pp;
+  for(int i=0;i<n;i++)
+  {
+    QMatrix matrix;
+    matrix.rotate(360*i/n);
+    matrix.translate(200,0);
+    matrix.rotate(720*i/n);
+    
+    QPointF p0 = matrix.map(QPointF(-100,-25));
+    QPointF p1 = matrix.map(QPointF(-100, 25));
+    QPointF p2 = matrix.map(QPointF( 100, 0));
+
+    pp.moveTo(p0);
+    pp.lineTo(p1);
+    pp.lineTo(p2);
+
+    pp.closeSubpath();
+    
+  }
+
+  pa.drawPath(pp);
+  pa.restore();
+
+  pa.save();
+  pa.translate(0,-300);
+
+  pp = QPainterPath();
+  QVector<QVector<QPointF> > lines;
+  clpr.getOutline(lines);
+  for(int i=0;i<lines.size();i++)
+  {
+    const QVector<QPointF> &line = lines[i];
+    pp.moveTo(line[0]);
+    for(int j=1;j<line.size();j++) pp.lineTo(line[j]);
+    pp.closeSubpath();
+  }
+
+  pa.setPen(QPen(Qt::red,1));
+  pa.drawPath(pp);
+
+  pa.restore();
+
+
+
+
+}
+
+
+
+//================================================================================
+
+
+//================================================================================
+
+
+void Sandbox::paint(QPainter &pa)
+{
+  pa.setPen(Qt::gray);
+  double r = 500;
+  pa.drawLine(-r,0,r,0);
+  pa.drawLine(0,-r,0,r);
+
+
+  /*
+  m_imp->m_gear1->setAngle(M_PI - getParameter()*0.01);
+
+  GearLink(m_imp->m_gear1, m_imp->m_gear2).update();
+
+  
+  m_imp->m_gear1->draw(pa);
+  m_imp->m_gear2->draw(pa);
+  */
+
+
+
+
+  m_imp->foo2(pa);
   /*
 
   draw(pa, m_imp->curve);
