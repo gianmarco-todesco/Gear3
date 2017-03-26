@@ -31,7 +31,10 @@ public:
   void setBodyPath(const QPainterPath &path) { m_bodyPath = path; }
   void setBodyPath(const QVector<QVector2D> &pts);
 
+  const QPainterPath &getPitchLinePath() const { return m_pitchLinePath; }
+  
   void draw(QPainter &pa);
+  void rotoTranslate(QPainter &pa);
 
 private:
   void updatePitchPath();
@@ -40,9 +43,40 @@ private:
 
 
 class GearLink {
-  Gear *m_driver, *m_driven;
+  Gear *m_gear1, *m_gear2; // 1 = driver, 2 = driven
+  double m_theta1, m_theta2; // the gears match when: m_gear1->getAngle() == m_theta1 && m_gear2->getAngle() == m_theta2;
+  double m_distance;
 public:
   GearLink(Gear*driver, Gear *driven);
   ~GearLink();
+  double getDistance() const { return m_distance; }
+  double computeDistance() const;
   void update();
+
+  void moveDriven(double psi);
+
+};
+
+
+class GearBox {
+  QList<Gear*> m_gears;
+  QList<GearLink*> m_links;
+
+public:
+  GearBox();
+  virtual ~GearBox();
+
+  void clear();
+
+  Gear *addGear(Gear*gear);
+  GearLink *addLink(GearLink*link);
+  GearLink *addLink(int a, int b);
+
+  int getGearCount() const { return m_gears.count(); }
+  Gear *getGear(int index) const { return m_gears.at(index); }
+
+  int getLinkCount() const { return m_links.count(); }
+  GearLink *getLink(int index) const { return m_links.at(index); }
+
+  virtual void draw(QPainter &pa);
 };

@@ -216,14 +216,14 @@ double PitchCurve::getRFromPhi(double phi) const
 {
   int a,b,q; double t;
   if(m_isOpen) {
-    getIndexFromS(phi, a,b, t);
+    getIndexFromPhi(phi, a,b, t);
     if(a<0) return m_pts[b].r;
     else if(b<0) return m_pts[a].r;
     else return m_pts[a].r*(1-t) + m_pts[b].r*t;
   }
   else
   {
-    getIndexFromS(phi, a,b, q, t);
+    getIndexFromPhi(phi, a,b, q, t);
     return m_pts[a].r*(1-t) + m_pts[b].r*t;
   }
 }

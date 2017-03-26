@@ -81,18 +81,55 @@ SimpleToothMaker::SimpleToothMaker()
 
 void SimpleToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve, const Params &params)
 {
-  int m = 4;
-  double ds = params.toothLength/m;
+  int m = 5, a = 3;
+  int m4 = m*4;
+  int n = params.toothCount * m4;
+  double ds = curve->getLength() / n;
   double h = params.toothHeight * 0.5;
-  double s = 0;
-  int i = 0;
-  while(s<curve->getLength())
+  QVector<double> ys(m4);
+  int i1 = a, i2 = 2*m-a, i3 = 2*m+a, i4 = 4*m-a, i5 = 4*m-1;
+  
+  for(int i=0;i<=i1;i++) ys[i] = h;
+  for(int i=i1+1;i<=i2;i++) { double t = (double)(i-i1)/(double)(i2-i1); ys[i] = h * (1-2*t); }
+  for(int i=i2+1;i<=i3;i++) ys[i] = -h;
+  for(int i=i3+1;i<=i4;i++) { double t = (double)(i-i3)/(double)(i4-i3); ys[i] = h * (-1+2*t); }
+  for(int i=i4+1;i<=i5;i++) ys[i] = h;  
+  int joff = ((int)(0.5+params.toothOffset * m4))%m4;
+
+  for(int i=0;i<n;i++)
   {
-    double y = 0.0;
-    if(i!=0 && i!=m) y = i<m ? h : -h; 
-    pts.append(curve->getPosFromS(s,y));
-    s += ds;
-    i = (i+1)%(2*m);
+    int j = (i+joff)%m4;
+    pts.append(curve->getPosFromS(ds*i,ys[j]));
   }
 }
 
+void SquareToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve, const Params &params)
+{
+  double ds = curve->getLength() / params.toothCount;
+
+  double y0 = -params.toothHeight * 0.5;
+  double y1 = y0 + params.toothHeight;
+
+  int ma = 5, mb = 10;
+  double a = 0.2;
+
+  for(int i=0;i<params.toothCount;i++) 
+  {
+    double s0 = ds*i;
+    double s1 = s0 + a * ds;
+    double s2 = s0 + ds - a * ds;
+    double s3 = s0 + ds;
+    for(int i=0;i<ma;i++) {
+      double t = (double)i/(double)(ma-1);
+      pts.append(curve->getPosFromS(s0*(1-t)+s1*t, y1));
+    }
+    for(int i=0;i<mb;i++) {
+      double t = (double)i/(double)(mb-1);
+      pts.append(curve->getPosFromS(s1*(1-t)+s2*t, y0));
+    }
+    for(int i=0;i<ma-1;i++) {
+      double t = (double)i/(double)(ma-1);
+      pts.append(curve->getPosFromS(s2*(1-t)+s3*t, y1));
+    }
+  }    
+}

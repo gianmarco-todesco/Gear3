@@ -34,11 +34,28 @@ class SimpleToothMaker {
 public:
 
   struct Params {
-    int toothLength;
+    int toothCount;
     double toothHeight;
+    double toothOffset;
+    Params() : toothCount(10), toothHeight(10), toothOffset(0) {}
   };
 
   SimpleToothMaker();
+  void makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve, const Params &params);
+
+};
+
+
+class SquareToothMaker {
+public:
+
+  struct Params {
+    int toothCount;
+    double toothHeight;
+    
+  };
+
+  SquareToothMaker() {}
   void makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve, const Params &params);
 
 };
