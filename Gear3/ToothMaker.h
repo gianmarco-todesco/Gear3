@@ -59,3 +59,10 @@ public:
   void makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve, const Params &params);
 
 };
+
+
+class MagicToothMaker {
+
+  MagicToothMaker() {}
+  void makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve);
+};

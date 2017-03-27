@@ -102,6 +102,30 @@ void ClipperWrapper::subtract(const QVector<QVector<QPointF> > &outline)
   m_imp->execute(ClipperLib::ctDifference, outline);
 }
 
+void ClipperWrapper::intersect(const QVector<QPointF> &outline)
+{
+  m_imp->execute(ClipperLib::ctIntersection, outline);
+}
+
+void ClipperWrapper::intersect(const QVector<QVector<QPointF> > &outline)
+{
+  m_imp->execute(ClipperLib::ctIntersection, outline);
+}
+
+void ClipperWrapper::antiSubtract(const QVector<QPointF> &outline)
+{
+  using namespace ClipperLib;
+  Path path; m_imp->toPath(path, outline);
+  Clipper clpr;
+  clpr.AddPath(path, ptSubject, true);
+  clpr.AddPaths(m_imp->result, ptClip, true);
+  Paths tmp;
+  clpr.Execute(ctDifference, tmp, pftEvenOdd, pftEvenOdd);   
+  m_imp->result.swap(tmp);
+}
+
+
+
 void ClipperWrapper::add(QPointF &p0, QPointF &p1, QPointF &p2)
 {
   QVector<QPointF> pts; pts << p0 << p1 << p2;

@@ -19,6 +19,11 @@ public:
   void subtract(const QVector<QPointF> &outline);
   void subtract(const QVector<QVector<QPointF> > &outline);
 
+  void intersect(const QVector<QPointF> &outline);
+  void intersect(const QVector<QVector<QPointF> > &outline);
+
+  void antiSubtract(const QVector<QPointF> &outline);
+
   void getResult(QVector<QVector<QPointF> > &lines);
 };
 

@@ -909,6 +909,33 @@ public:
     pa.setPen(QPen(Qt::blue, 2));
     pa.setBrush(Qt::NoBrush);
     pa.drawPath(pp);
+
+    QVector<QPointF> bound;
+    for(int i=0;i<crv->getPointCount(); i++)
+    {
+      PitchCurve::Point pt = crv->getPoint(i);
+      bound.append((pt.pos + pt.right*20).toPointF());
+    }
+
+    pa.setPen(QPen(Qt::magenta, 1));
+    pp = QPainterPath();
+    pp.addPolygon(QPolygonF(bound));
+    pp.closeSubpath();
+    pa.drawPath(pp);
+
+    cw.antiSubtract(bound);
+    
+    outline.clear();
+
+    cw.getResult(outline);
+    pp = QPainterPath ();
+    for(int i=0;i<outline.count();i++) { pp.addPolygon(QPolygonF(outline[i])); pp.closeSubpath(); }
+    pa.setPen(Qt::NoPen);
+    pa.setBrush(QColor(100,250,250,127));
+    pa.drawPath(pp);
+
+
+
   }
 
   bool onKey(int key) {

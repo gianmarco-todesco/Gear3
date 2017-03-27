@@ -133,3 +133,10 @@ void SquareToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curv
     }
   }    
 }
+
+
+
+void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve)
+{
+}
+
