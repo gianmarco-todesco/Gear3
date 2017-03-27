@@ -12,11 +12,13 @@ public:
   ClipperWrapper();
   ~ClipperWrapper();
 
-  void add(QPointF &p0, QPointF &p1, QPointF &p2);
   void add(const QVector<QPointF> &outline);
-  void sub(const QVector<QPointF> &outline);
-  void intersect(const QVector<QPointF> &outline);
+  void add(const QVector<QVector<QPointF> > &outline);
+  void add(QPointF &p0, QPointF &p1, QPointF &p2);
 
-  void getOutline(QVector<QVector<QPointF> > &lines);
+  void subtract(const QVector<QPointF> &outline);
+  void subtract(const QVector<QVector<QPointF> > &outline);
+
+  void getResult(QVector<QVector<QPointF> > &lines);
 };
 

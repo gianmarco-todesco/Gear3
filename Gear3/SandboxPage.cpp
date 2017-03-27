@@ -8,9 +8,11 @@
 #include "ToothMaker.h"
 #include "PitchCurve.h"
 #include "ClipperWrapper.h"
+#include "PolygonSweeper.h"
 
 #include <QLineF>
 
+#ifdef CICCIO
 namespace {
 Gear *makeSpiralGear(int toothCount)
 {
@@ -817,6 +819,97 @@ public:
   }
 
 
+
+  bool onKey(int key) {
+    return false;
+  }
+} sandboxPage;
+
+#endif
+
+
+class SandboxPage : public Page, public Pannable {
+public:
+  SandboxPage() : Page("sandbox") { 
+  }
+  ~SandboxPage() {  }
+
+  void draw(QPainter &pa) {
+
+
+    PitchCurve *crv = new PitchCurve(EllipseFunction(100,0.6),200);
+
+    QPainterPath pp;
+    pp.moveTo(crv->getPoint(0).pos.toPointF());
+    for(int i=1;i<crv->getPointCount();i++) pp.lineTo(crv->getPoint(i).pos.toPointF());
+    pa.setPen(Qt::black);
+    pa.drawPath(pp);
+
+    QList<QPointF> shape;
+    shape << QPointF(20,-20) << QPointF(5,20) << QPointF(-5,20) << QPointF(-20,-20);
+
+
+    ClipperWrapper cw;
+ 
+    int n = 10;
+    for(int k=0;k<n;k++)
+    {
+      double s0 = crv->getLength()*k/n;
+
+      QList<QPolygonF> polygons;
+      PolygonSweeper ps;
+      ps.setShape(shape);
+
+      int m = 40;
+      for(int i=0;i<m;i++)
+      {
+        double t = (double)i/(double)(m-1);
+        double s = s0 + 200*(-1+2*t);
+        PitchCurve::Point pt = crv->getPointFromS(s);
+        QMatrix matrix;
+        matrix.translate(pt.pos.x(), pt.pos.y());
+        matrix.rotate(180.0*atan2(pt.right.y(), pt.right.x())/M_PI + 90);
+        matrix.translate(-s + s0,0);
+        ps.add(matrix);
+        QPolygonF polygon;
+        for(int i=0;i<shape.count();i++) polygon.append(matrix.map(shape[i]));
+        polygons.append(polygon);
+      }
+
+      QVector<QVector<QPointF > > strip;
+      ps.getOutline(strip);
+      cw.add(strip);
+
+      pa.setBrush(Qt::yellow);
+      pa.setPen(QPen(Qt::black, 0.5));
+
+      QPainterPath pp;
+      for(int i=0;i<strip.count();i++)
+      {
+        pp.addPolygon(QPolygonF(strip[i]));
+        pp.closeSubpath();
+      }
+      pa.drawPath(pp);
+
+      pa.setBrush(Qt::NoBrush);
+      pa.setPen(Qt::gray);
+      pp = QPainterPath();
+      for(int i=0;i<polygons.count();i++) 
+      {
+        pp.addPolygon(polygons[i]);
+        pp.closeSubpath();
+      }
+      pa.drawPath(pp);
+    }  
+
+    QVector<QVector<QPointF > > outline;
+    cw.getResult(outline);
+    pp = QPainterPath ();
+    for(int i=0;i<outline.count();i++) { pp.addPolygon(QPolygonF(outline[i])); pp.closeSubpath(); }
+    pa.setPen(QPen(Qt::blue, 2));
+    pa.setBrush(Qt::NoBrush);
+    pa.drawPath(pp);
+  }
 
   bool onKey(int key) {
     return false;

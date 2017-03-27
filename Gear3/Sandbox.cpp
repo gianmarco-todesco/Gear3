@@ -238,7 +238,7 @@ void Sandbox::Imp::foo(QPainter &pa)
 
   pp = QPainterPath();
   QVector<QVector<QPointF> > lines;
-  clpr.getOutline(lines);
+  clpr.getResult(lines);
   for(int i=0;i<lines.size();i++)
   {
     const QVector<QPointF> &line = lines[i];
