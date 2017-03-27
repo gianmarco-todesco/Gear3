@@ -1,6 +1,7 @@
 #include "Gear.h"
 #include "PitchCurve.h"
 #include <qmath.h>
+#include "ToothMaker.h"
 
 
 Gear::Gear(PitchCurve *curve) 
@@ -31,7 +32,7 @@ void Gear::draw(QPainter &pa)
 
   QPointF p = m_curve->getPoint(0).pos.toPointF();
   pa.setPen(Qt::black);
-  pa.drawLine(p,-p*10);
+  pa.drawLine(p*0.9, p*0.5);
 
   pa.restore();
 }
@@ -194,5 +195,38 @@ void GearBox::draw(QPainter &pa)
     pa.drawPath(gear->getPitchLinePath());
     pa.restore();
   }
+
+}
+
+
+
+//=============================================================================
+
+
+Gear *makeCircularGear(int toothLength, int toothCount, int flag) 
+{
+  double radius = (toothLength * toothCount) / (2*M_PI);
+  Gear *gear = new Gear(new PitchCurve(EllipseFunction(radius,0.0),200));
+
+  
+  QVector<QVector2D> pts;
+  if(flag == 0)
+  {
+    SimpleToothMaker::Params params;
+    params.toothHeight = toothLength*0.75*0.5;
+    params.toothCount = toothCount;
+    SimpleToothMaker().makeTeeth(pts, gear->getCurve(), params);
+  }
+  else if(flag==1)
+  {
+    SquareToothMaker::Params params;
+    params.toothHeight = toothLength*0.75*0.5;
+    params.toothCount = toothCount;
+    SquareToothMaker().makeTeeth(pts, gear->getCurve(), params);
+  }
+
+  gear->setBodyPath(pts);
+  
+  return gear;
 
 }

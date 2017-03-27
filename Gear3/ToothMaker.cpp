@@ -1,5 +1,7 @@
 #include "ToothMaker.h"
 #include "PitchCurve.h"
+#include "ClipperWrapper.h"
+#include "PolygonSweeper.h"
 
 
 #include <qmath.h>
@@ -136,7 +138,58 @@ void SquareToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curv
 
 
 
-void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve)
+void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *crv)
 {
+  QList<QPointF> shape;
+  shape << QPointF(20,-20) << QPointF(5,20) << QPointF(-5,20) << QPointF(-20,-20);
+
+
+  ClipperWrapper cw;
+ 
+  int n = 10;
+  for(int k=0;k<n;k++)
+  {
+    double s0 = crv->getLength()*k/n;
+
+    QList<QPolygonF> polygons;
+    PolygonSweeper ps;
+    ps.setShape(shape);
+
+    int m = 40;
+    for(int i=0;i<m;i++)
+    {
+      double t = (double)i/(double)(m-1);
+      double s = s0 + 200*(-1+2*t);
+      PitchCurve::Point pt = crv->getPointFromS(s);
+      QMatrix matrix;
+      matrix.translate(pt.pos.x(), pt.pos.y());
+      matrix.rotate(180.0*atan2(pt.right.y(), pt.right.x())/M_PI + 90);
+      matrix.translate(-s + s0,0);
+      ps.add(matrix);
+      QPolygonF polygon;
+      for(int i=0;i<shape.count();i++) polygon.append(matrix.map(shape[i]));
+      polygons.append(polygon);
+    }
+
+    QVector<QVector<QPointF > > strip;
+    ps.getOutline(strip);
+    cw.add(strip);
+  }
+
+  QVector<QVector<QPointF > > outline;
+  cw.getResult(outline);
+
+  QVector<QPointF> bound;
+  for(int i=0;i<crv->getPointCount(); i++)
+  {
+    PitchCurve::Point pt = crv->getPoint(i);
+    bound.append((pt.pos + pt.right*20).toPointF());
+  }
+
+  cw.antiSubtract(bound);    
+  outline.clear();
+
+  cw.getResult(outline);
+  for(int i=0;i<outline[0].count();i++) pts.append(QVector2D(outline[0][i]));
 }
 

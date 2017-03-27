@@ -62,7 +62,7 @@ public:
 
 
 class MagicToothMaker {
-
+public:
   MagicToothMaker() {}
   void makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve);
 };

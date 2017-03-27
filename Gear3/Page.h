@@ -53,6 +53,7 @@ public:
   QRect getBounds() const { return QRect(0,0,m_width,m_height); }
 
   virtual void draw(QPainter &pa) = 0;
+  virtual void drawOverlay(QPainter &pa) {}
   virtual void tick() {}
   virtual bool onKey(int key) { return false; }
 

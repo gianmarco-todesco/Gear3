@@ -80,3 +80,6 @@ public:
 
   virtual void draw(QPainter &pa);
 };
+
+
+Gear *makeCircularGear(int toothLength, int toothCount, int flag = 0);

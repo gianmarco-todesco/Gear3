@@ -1,3 +1,4 @@
+squareGears
 sandbox
 spiralGear
 ellipticGears2

@@ -10,6 +10,8 @@
 #include "ClipperWrapper.h"
 #include "PolygonSweeper.h"
 
+#include "ToothMaker.h"
+
 #include <QLineF>
 
 #ifdef CICCIO
@@ -32,33 +34,6 @@ Gear *makeSpiralGear(int toothCount)
 
 }
 
-
-Gear *makeCircularGear(int toothLength, int toothCount, int flag = 0) {
-  double radius = (toothLength * toothCount) / (2*M_PI);
-  Gear *gear = new Gear(new PitchCurve(EllipseFunction(radius,0.0),200));
-
-  
-  QVector<QVector2D> pts;
-  if(flag == 0)
-  {
-    SimpleToothMaker::Params params;
-    params.toothHeight = toothLength*0.75*0.5;
-    params.toothCount = toothCount;
-    SimpleToothMaker().makeTeeth(pts, gear->getCurve(), params);
-  }
-  else if(flag==1)
-  {
-    SquareToothMaker::Params params;
-    params.toothHeight = toothLength*0.75*0.5;
-    params.toothCount = toothCount;
-    SquareToothMaker().makeTeeth(pts, gear->getCurve(), params);
-  }
-
-  gear->setBodyPath(pts);
-  
-  return gear;
-
-}
 
 
 Gear *makeEllipticGear(int toothLength, int toothCount, double e) {
@@ -481,201 +456,6 @@ void SandboxPage2::drawCurve(QPainter &pa, PitchCurve *crv)
 }
 
 
-class Sweeper {
-  QVector<QVector2D> m_shape;
-  QPainterPath m_mainPath, m_borderPath;
-  QList<QVector2D> m_lastPolygon;
-  QVector2D m_lastCenter;
-  QVector<QLineF> m_lines[2];
-  QVector<QPointF> m_outline;
-
-public:
-  Sweeper() {}
-
-  void setShape(const QVector<QVector2D> &shape) { m_shape = shape; }
-
-  void add(const QMatrix &matrix);
-
-  void buildOutline() {
-    
-    QVector<QPointF> borders[2];      
-    for(int i=0;i<2;i++)
-    {
-      QVector<QPointF> &border = borders[i];
-      border.append(m_lines[i][0].p1());
-      for(int j=0;j+1<m_lines[i].count();j++)
-      {
-        QLineF line1 = m_lines[i][j];
-        QLineF line2 = m_lines[i][j+1];
-        if(QVector2D(line1.p2()-line2.p1()).lengthSquared()<4)
-        {
-          border.append(line1.p2());
-        }
-        else
-        {
-          QPointF p;
-          if(line1.intersect(line2, &p)!=QLineF::BoundedIntersection)
-          {
-            border.append(line1.p2());
-            border.append(line2.p1());
-          }
-          else
-          {
-            border.append(p);
-          }
-        }
-      }
-      border.append(m_lines[i].back().p2());
-    }
-    for(int i=0;i<borders[0].count();i++) m_outline.append(borders[0][i]);
-    for(int i=borders[1].count()-1;i>=0;i--) m_outline.append(borders[1][i]);
-  }
-
-  void getOutline(QVector<QPointF> &outline) { outline = m_outline; }
-
-  void draw(QPainter &pa) {
-
-    pa.setPen(Qt::gray);
-    pa.drawPath(m_mainPath);
-    
-    for(int i=0;i<2;i++)
-    {
-      QVector<QPointF> border;
-      border.append(m_lines[i][0].p1());
-      for(int j=0;j+1<m_lines[i].count();j++)
-      {
-        QLineF line1 = m_lines[i][j];
-        QLineF line2 = m_lines[i][j+1];
-        if(QVector2D(line1.p2()-line2.p1()).lengthSquared()<4)
-        {
-          border.append(line1.p2());
-        }
-        else
-        {
-          QPointF p;
-          if(line1.intersect(line2, &p)!=QLineF::BoundedIntersection)
-          {
-            border.append(line1.p2());
-            border.append(line2.p1());
-          }
-          else
-          {
-            border.append(p);
-          }
-        }
-      }
-      border.append(m_lines[i].back().p2());
-      
-      QPainterPath pp;
-      pp.moveTo(border[0]);
-      for(int j=1;j<border.count();j++) 
-        pp.lineTo(border[j]);
-      pa.setPen(i==0 ? Qt::red : Qt::green);
-      pa.drawPath(pp);
-    }
-
-
-    pa.setPen(Qt::red);
-    for(int i=0;i<2;i++)
-    {
-      for(int j=0;j<m_lines[i].count();j++)
-        pa.drawLine(m_lines[i][j].p1(), m_lines[i][j].p2());
-
-    }
-    
-  }
-};
-
-
-void Sweeper::add(const QMatrix &matrix)
-{
-  QList<QVector2D> polygon;
-  QVector2D center;
-  int n = m_shape.count();
-  for(int i=0;i<n;i++) { QVector2D p(matrix.map(m_shape[i].toPointF())); polygon.append(p); center += p;} 
-  center *= 1.0/n;
-
-  m_mainPath.moveTo(polygon[0].toPointF());
-  for(int i=1;i<m_shape.count();i++) m_mainPath.lineTo(polygon[i].toPointF());
-
-  
-  QVector2D movement = center - m_lastCenter;
-  if(!m_lastPolygon.empty() && movement.length()>1)
-  {
-    for(int side=0; side<2; side++) {
-      double sgn = 1-2*side;
-
-      int k = -1;
-      double maxDist = 0;
-      QVector2D perp(-movement.y(), movement.x());
-
-      for(int i=0;i<n;i++) 
-      {
-        double d = sgn*QVector2D::dotProduct(polygon[i]-m_lastCenter, perp);
-        if(k<0 || d>maxDist) { maxDist = d; k = i; }
-      }
-      int k1 = k;
-      int k2 = 0;
-      int count=0;
-    
-      for(;;)
-      {
-        QVector2D v = m_lastPolygon[k2] - polygon[k1];
-        for(int i=0;i<n;i++)
-        {
-          QVector2D v2 = m_lastPolygon[i] - polygon[k1];
-          if(sgn*(-v2.x()*v.y()+v2.y()*v.x())<0) { v=v2; k2 = i; }
-        }
-        bool done = true;
-        v = polygon[k1] - m_lastPolygon[k2];
-        for(int i=0;i<n;i++)
-        {
-          QVector2D v2 = polygon[i] - m_lastPolygon[k2]; 
-          if(sgn*(-v2.x()*v.y()+v2.y()*v.x())>0) { v=v2; k1 = i; done = false;}
-        }
-        if(done|| ++count>100) break;
-      }
-      QVector<QLineF> &lines = m_lines[side];
-      lines.append(QLineF(m_lastPolygon[k2].toPointF(), polygon[k1].toPointF()));
-    }
-
-
-    /*
-    k1 = k;
-    k2 = 0;
-    int count=0;
-    for(;;)
-    {
-      QVector2D v = m_lastPolygon[k2] - polygon[k1];
-      for(int i=0;i<n;i++)
-      {
-        QVector2D v2 = m_lastPolygon[i] - polygon[k1];
-        if(v2.y()*v.x()-v2.x()*v.y()>0) { v=v2; k2 = i; }
-      }
-      bool done = true;
-      v = polygon[k1] - m_lastPolygon[k2];
-      for(int i=0;i<n;i++)
-      {
-        QVector2D v2 = polygon[i] - m_lastPolygon[k2]; 
-        if(v2.y()*v.x()-v2.x()*v.y()<0) { v=v2; k1 = i; done = false;}
-      }
-      if(done || ++count>10) break;
-    }
-
-    m_borderPath.moveTo(polygon[k1].toPointF());
-    m_borderPath.lineTo(m_lastPolygon[k2].toPointF());
-    */
-    
-
-  }
-  m_lastPolygon.swap(polygon);
-  m_lastCenter = center;
-
-
-}
-
-
-
 
 class SandboxPage : public Page, public Pannable {
 public:
@@ -829,12 +609,46 @@ public:
 
 
 class SandboxPage : public Page, public Pannable {
+  Gear *m_gear;
 public:
   SandboxPage() : Page("sandbox") { 
+    m_gear = new Gear(new PitchCurve(EllipseFunction(100,0.6),200));
+
+    QVector<QVector2D> body;
+    MagicToothMaker().makeTeeth(body, m_gear->getCurve());
+    m_gear->setBodyPath(body);
   }
   ~SandboxPage() {  }
 
-  void draw(QPainter &pa) {
+   void draw(QPainter &pa) {
+     QList<QPointF> shape;
+     shape << QPointF(20,-20) << QPointF(5,20) << QPointF(-5,20) << QPointF(-20,-20);
+
+     m_gear->draw(pa);
+     double s = getParameter();
+     PitchCurve::Point pt = m_gear->getCurve()->getPointFromS(s);
+     int n = 10;
+     QPainterPath pp;
+     for(int k=0;k<n;k++)
+     {       
+        double s0 = m_gear->getCurve()->getLength()*k/n;
+
+        QMatrix matrix;
+        matrix.translate(pt.pos.x(), pt.pos.y());
+        matrix.rotate(180.0*atan2(pt.right.y(), pt.right.x())/M_PI + 90);
+        matrix.translate(-s + s0,0);
+        QPolygonF polygon;
+        for(int i=0;i<shape.count();i++) polygon.append(matrix.map(shape[i])); 
+        pp.addPolygon(polygon);
+        pp.closeSubpath();
+     }
+     pa.setPen(QPen(Qt::red,1));
+     pa.setBrush(Qt::yellow);
+     pa.drawPath(pp);
+   }
+
+
+  void draw2(QPainter &pa) {
 
 
     PitchCurve *crv = new PitchCurve(EllipseFunction(100,0.6),200);
@@ -934,7 +748,7 @@ public:
     pa.setBrush(QColor(100,250,250,127));
     pa.drawPath(pp);
 
-
+    delete crv;
 
   }
 

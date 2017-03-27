@@ -62,7 +62,7 @@ void Viewer::paintEvent(QPaintEvent*)
   // m_sandbox->paint(pa);  
   m_pageMngr.draw(pa, width(), height());
 
-  if(pannable) pa.restore();
+  if(pannable) { pa.restore(); getCurrentPage()->drawOverlay(pa); }
 
   drawFps(pa);
 
