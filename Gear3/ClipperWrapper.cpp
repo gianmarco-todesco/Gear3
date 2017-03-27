@@ -49,6 +49,57 @@ void ClipperWrapper::add(QPointF &p0, QPointF &p1, QPointF &p2)
   }
 }
 
+void ClipperWrapper::add(const QVector<QPointF> &outline)
+{
+  using namespace ClipperLib;
+  Path path; 
+  for(int i=0;i<outline.count();i++) path.push_back(m_imp->toIntPoint(outline[i]));
+  path.push_back(m_imp->toIntPoint(outline[0]));
+  if(m_imp->result.empty()) 
+  {
+    m_imp->result.push_back(path);
+  }
+  else
+  {
+    Clipper clpr;
+    clpr.AddPaths(m_imp->result, ptSubject, true);
+    clpr.AddPath(path, ptClip, true);
+    Paths result;
+    clpr.Execute(ctUnion, result, pftEvenOdd, pftEvenOdd);   
+    result.swap(m_imp->result);
+  }
+}
+
+void ClipperWrapper::sub(const QVector<QPointF> &outline)
+{
+ using namespace ClipperLib;
+  Path path; 
+  for(int i=0;i<outline.count();i++) path.push_back(m_imp->toIntPoint(outline[i]));
+  path.push_back(m_imp->toIntPoint(outline[0]));
+
+  Clipper clpr;
+  clpr.AddPaths(m_imp->result, ptSubject, true);
+  clpr.AddPath(path, ptClip, true);
+  Paths result;
+  clpr.Execute(ctDifference, result, pftEvenOdd, pftEvenOdd);   
+  result.swap(m_imp->result);
+}
+
+void ClipperWrapper::intersect(const QVector<QPointF> &outline)
+{
+  using namespace ClipperLib;
+  Path path; 
+  for(int i=0;i<outline.count();i++) path.push_back(m_imp->toIntPoint(outline[i]));
+  path.push_back(m_imp->toIntPoint(outline[0]));
+
+  Clipper clpr;
+  clpr.AddPaths(m_imp->result, ptClip, true);
+  clpr.AddPath(path, ptSubject, true);
+  Paths result;
+  clpr.Execute(ctDifference, result, pftEvenOdd, pftEvenOdd);   
+  result.swap(m_imp->result);
+}
+
 
 void ClipperWrapper::getOutline(QVector<QVector<QPointF> > &lines)
 {
