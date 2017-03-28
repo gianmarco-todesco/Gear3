@@ -165,6 +165,14 @@ PitchCurve::PitchCurve(const CurveFunction &f, int n)
     m_length += spiralArcLength(m_pts.back().phi, m_pts.back().r, 2*M_PI, m_pts[0].r);
 }
 
+PitchCurve::PitchCurve(const QVector<Point> &pts)
+  :m_pts(pts)
+{
+  m_length = pts.back().s + (pts.back().pos - pts.front().pos).length();
+  m_isOpen = false;
+
+}
+  
 
 PitchCurve::~PitchCurve()
 {

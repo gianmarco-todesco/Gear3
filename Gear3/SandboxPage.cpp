@@ -352,15 +352,30 @@ public:
 };
 
 
-class SandboxPage : public Page, public Pannable {
+
+
+class MyGearBox5 : public MyGearBox {
+public:
+  MyGearBox5() {
+
+  }
+  void setParams(double param1, double param2) {
+    double psi = M_PI + param1;
+    
+    getGear(0)->setAngle(param2);
+  }
+};
+
+
+class Sandbox2Page : public Page, public Pannable {
   int m_mode;
   double m_param1, m_param2;
   MyGearBox* m_gearBox;
 public:
-  SandboxPage() : Page("sandbox"), m_mode(0), m_param1(0), m_param2(0) { 
-    m_gearBox = new MyGearBox4();
+  Sandbox2Page() : Page("sandbox2"), m_mode(0), m_param1(0), m_param2(0) { 
+    m_gearBox = new MyGearBox5();
   }
-  ~SandboxPage() {  }
+  ~Sandbox2Page() {  }
 
   void draw(QPainter &pa);
   bool onKey(int key) {
@@ -376,6 +391,37 @@ public:
     m_param1 += dx*0.01;
     m_param2 += dy*0.01;
   }
+} sandboxPage2;
+
+void Sandbox2Page::draw(QPainter &pa)
+{
+  pa.setPen(Qt::gray);
+  QPainterPath pp;
+  pp.moveTo(-500,0);pp.lineTo(500,0);
+  pp.moveTo(0,-500);pp.lineTo(0,500);
+  pa.drawPath(pp);
+
+  m_gearBox->setParams(m_param1, m_param2);
+  m_gearBox->draw(pa);
+
+}
+
+
+
+class SandboxPage : public Page, public Pannable {
+  
+public:
+  SandboxPage() : Page("sandbox"){ 
+
+  }
+  ~SandboxPage() {  }
+
+  void draw(QPainter &pa);
+  bool onKey(int key) {
+    return false;
+  }
+  void drag(int dx, int dy, int modifier) {
+  }
 } sandboxPage;
 
 void SandboxPage::draw(QPainter &pa)
@@ -386,8 +432,60 @@ void SandboxPage::draw(QPainter &pa)
   pp.moveTo(0,-500);pp.lineTo(0,500);
   pa.drawPath(pp);
 
-  m_gearBox->setParams(m_param1, m_param2);
-  m_gearBox->draw(pa);
+  double dist = 200.0;
+  double r = dist*0.5;
+  QList<QPair<double, double> > lst;
+  lst.append(qMakePair(r,0.0));
+  double phi0 = 0.0, phi1 = 0.0;
+  double r0 = r, r1 = r;
+  double ds = 1;
+  for(;;)
+  {
+    double ra0 = r0 - 0.1;
+    double ra1 = dist - ra0;
+    phi0 -= acos((ra0*ra0+r0*r0-ds*ds)/(2.0*ra0*r0));
+    phi1 += acos((ra1*ra1+r1*r1-ds*ds)/(2.0*ra1*r1));
+    lst.push_back(qMakePair(ra1,phi1));
+    lst.push_front(qMakePair(ra0,phi0));
+    if(phi1-phi0>=M_PI/2) break;
+    r0=ra0;
+    r1=ra1;
+  }
+
+  int n = lst.count();
+  for(int i=n-1;i>=0;i--) lst.append( qMakePair(lst[i].first, lst[n-1].second+lst[n-1].second-lst[i].second));
+  n = lst.count();
+  for(int i=n-1;i>=0;i--) lst.append( qMakePair(lst[i].first, lst[n-1].second+lst[n-1].second-lst[i].second));
+
+  pp = QPainterPath();
+  for(int i=0;i<lst.count();i++)
+  {
+    QPointF p = lst[i].first * QPointF(cos(lst[i].second), sin(lst[i].second));
+    if(i==0) pp.moveTo(p); else pp.lineTo(p);
+  }
+  pa.drawPath(pp);
+
+  QVector<PitchCurve::Point> pts;
+  for(int i=0;i<lst.count();i++)
+  {
+    PitchCurve::Point pt;
+    pt.phi = lst[i].second;
+    pt.r = lst[i].first;
+    pt.pos = pt.r * QVector2D(cos(pt.phi), sin(pt.phi));
+    pt.s = i==0 ? 0.0 : pts.back().s + (pts.back().pos-pt.pos).length();
+    pts.append(pt);
+  }
+  for(int i=0;i<pts.count();i++)
+  {
+    QVector2D p1 = pts[(i+1)%pts.count()].pos;
+    QVector2D p0 = pts[(i+pts.count()-1)%pts.count()].pos;
+    QVector2D v = (p1-p0).normalized();
+    pts[i].right = QVector2D(-v.y(),v.x());
+  }
+
+  Gear *gear1 = new Gear(new PitchCurve(pts));
+  gear1->draw(pa);
+  delete gear1;
 
 }
 

@@ -59,6 +59,7 @@ private:
 
 public:
   PitchCurve(const CurveFunction &f, int n = 500);
+  PitchCurve(const QVector<Point> &pts);
   ~PitchCurve();
 
   bool isOpen() const { return m_isOpen; }
