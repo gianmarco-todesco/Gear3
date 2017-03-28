@@ -1,3 +1,5 @@
+spiral
+ellipse
 involuteGears
 title
 squareGears

@@ -16,6 +16,15 @@ public:
   static double computePerimeter(double r, double e);
 };
 
+
+class CenteredEllipseFunction : public CurveFunction {
+  double m_a,m_b;
+public:
+  CenteredEllipseFunction(double a, double b) : m_a(a), m_b(b) {}
+  QVector2D operator()(double t) const;
+
+};
+
 class SquareFunction : public CurveFunction {
   double m_l, m_r; // half square edge & corner radius
   double m_a, m_b; // coord of corner circles and length of diagonal from center to corner first point

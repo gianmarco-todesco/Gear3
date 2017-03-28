@@ -51,6 +51,14 @@ double EllipseFunction::computePerimeter(double r, double e)
 
 //=============================================================================
 
+QVector2D CenteredEllipseFunction::operator()(double t) const
+{
+  double phi = 2*M_PI*t;
+  return QVector2D(m_a*cos(phi), m_b*sin(phi));
+}
+
+//=============================================================================
+
 SquareFunction::SquareFunction(double length, double r) : m_r(r) 
 {
   m_l = m_r + (length - 2*M_PI*m_r)/8;
