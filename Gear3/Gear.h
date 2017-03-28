@@ -13,10 +13,14 @@ class Gear {
   double m_angle;
   QPainterPath m_pitchLinePath;
   QPainterPath m_bodyPath;
+  QBrush m_brush;
 
 public:
   Gear(PitchCurve *curve);
   ~Gear();
+
+  void setBrush(const QBrush &brush) { m_brush = brush; }
+  const QBrush &getBrush() const { return m_brush; }
 
   const PitchCurve *getCurve() const { return m_curve; }
 
@@ -70,7 +74,8 @@ public:
 
   Gear *addGear(Gear*gear);
   GearLink *addLink(GearLink*link);
-  GearLink *addLink(int a, int b);
+  GearLink *addLink(Gear *a, Gear *b) { return addLink(new GearLink(a,b)); }
+  GearLink *addLink(int a, int b) {return addLink(m_gears[a], m_gears[b]); }
 
   int getGearCount() const { return m_gears.count(); }
   Gear *getGear(int index) const { return m_gears.at(index); }

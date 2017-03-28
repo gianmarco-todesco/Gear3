@@ -14,7 +14,6 @@
 
 #include <QLineF>
 
-#ifdef CICCIO
 namespace {
 Gear *makeSpiralGear(int toothCount)
 {
@@ -353,15 +352,15 @@ public:
 };
 
 
-class SandboxPage2 : public Page, public Pannable {
+class SandboxPage : public Page, public Pannable {
   int m_mode;
   double m_param1, m_param2;
   MyGearBox* m_gearBox;
 public:
-  SandboxPage2() : Page("sandbox2"), m_mode(0), m_param1(0), m_param2(0) { 
+  SandboxPage() : Page("sandbox"), m_mode(0), m_param1(0), m_param2(0) { 
     m_gearBox = new MyGearBox4();
   }
-  ~SandboxPage2() {  }
+  ~SandboxPage() {  }
 
   void draw(QPainter &pa);
   bool onKey(int key) {
@@ -377,7 +376,20 @@ public:
     m_param1 += dx*0.01;
     m_param2 += dy*0.01;
   }
-} sandboxPage2;
+} sandboxPage;
+
+void SandboxPage::draw(QPainter &pa)
+{
+  pa.setPen(Qt::gray);
+  QPainterPath pp;
+  pp.moveTo(-500,0);pp.lineTo(500,0);
+  pp.moveTo(0,-500);pp.lineTo(0,500);
+  pa.drawPath(pp);
+
+  m_gearBox->setParams(m_param1, m_param2);
+  m_gearBox->draw(pa);
+
+}
 
 /*
 void SandboxPage::draw(QPainter &pa)
@@ -405,21 +417,11 @@ void SandboxPage::draw(QPainter &pa)
     
   }
 }
-
 */
 
-void SandboxPage2::draw(QPainter &pa)
-{
-  pa.setPen(Qt::gray);
-  QPainterPath pp;
-  pp.moveTo(-500,0);pp.lineTo(500,0);
-  pp.moveTo(0,-500);pp.lineTo(0,500);
-  pa.drawPath(pp);
+#ifdef CICCIO
 
-  m_gearBox->setParams(m_param1, m_param2);
-  m_gearBox->draw(pa);
-
-}
+/*
 
 
 
@@ -605,7 +607,6 @@ public:
   }
 } sandboxPage;
 
-#endif
 
 
 class SandboxPage : public Page, public Pannable {
@@ -756,3 +757,4 @@ public:
     return false;
   }
 } sandboxPage;
+#endif

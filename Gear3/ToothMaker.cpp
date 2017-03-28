@@ -7,42 +7,50 @@
 #include <qmath.h>
 
 
-void CircularToothMaker::makeToothSide(QList<QPair<double, double> > &qs, double pitchRadius, double toothHeight)
+void CircularToothMaker::makeToothSide(QList<QPair<double, double> > &qs, double r0, double r1, double r2)
 {
-  double r0 = pitchRadius - toothHeight*0.5;
-  double r1 = pitchRadius;
-  double r2 = r0 + toothHeight;
-  struct Node { double t, r; QVector2D pos; };
-  QList<Node> nodes;
-  double t = 0.0;
+  double rr[2] = {r1,r2}, tt[2];
+  int i=0;
+  double oldr=r0, oldt=0.0;
   for(;;)
   {
-    Node node;
-    node.t = t;
-    node.pos = evolute(t, r0);
-    node.r = node.pos.length();
-    nodes.append(node);
-    if(node.r>r2) break;
-    t += 0.02;
+    double t1 = oldt + 0.01;
+    double r1 = evolute(t1,r0).length();
+    if(r1>rr[i])
+    {
+      Q_ASSERT(oldr<=rr[i] && rr[i]<r1);
+      double t = oldt + (t1-oldt) * (rr[i]-oldr) / (r1-oldr);
+      tt[i] = t;
+      if(i==1) break;
+      i++;
+    }
+    oldr=r1;
+    oldt=t1;
   }
 
+  int m = 10;
+  int ma = 2 + (int)(m*(r1-r0)/(r2-r0));
+  int mb = 2 + (int)(m*(r2-r1)/(r2-r0));
+  m = ma+mb-1;
+
   int j = 0;
-  int m = 7;
   for(int i=0;i<m;i++)
   {
-    double r = r0 + (r2-r0)*i/(double)(m-1);
-    if(r>r2)r=r2;
-    while(nodes[j+1].r<=r) j++;
-    double w = (r-nodes[j].r)/(nodes[j+1].r-nodes[j].r);
-    double t = nodes[j].t *(1-w) + nodes[j+1].t * w;
+    double t;
+    if(i<=ma)
+      t = tt[0] * (double)i/(double)ma;
+    else
+      t = tt[0] + (tt[1]-tt[0]) * (double)(i-ma)/(double)(m-1-ma);
     QVector2D pos = evolute(t, r0);
-    double err = fabs(r-pos.length());
-    Q_ASSERT(err<0.05);
+    double r = pos.length();
     double phi = atan2(pos.y(),pos.x());
     if(phi<0.0)phi += 2*M_PI;
     qs.append(qMakePair(phi, r));
   }
-  double dphi = qs[m/2].first;
+  Q_ASSERT(fabs(qs[0].second-r0)<1.0e-2);
+  Q_ASSERT(fabs(qs[ma].second-r1)<1.0e-2);
+  Q_ASSERT(fabs(qs[m-1].second-r2)<1.0e-2);
+  double dphi = qs[ma].first;
   for(int i=0;i<m;i++) qs[i].first -= dphi;
 }
 
@@ -59,7 +67,9 @@ void CircularToothMaker::completeTooth(QList<QPair<double, double> > &qs, int to
 void CircularToothMaker::makeTeeth(QVector<QVector2D> &pts, const Params &params)
 {
   QList<QPair<double, double> > qs;
-  makeToothSide(qs, params.pitchRadius, params.toothHeight);
+  double r1 = params.pitchRadius;
+  double r0 = r1 - params.toothDedendum, r2 = r1 + params.toothAddendum;
+  makeToothSide(qs, r0,r1,r2);
   completeTooth(qs, params.toothCount);
   int n = params.toothCount;
   for(int i=0;i<n;i++)

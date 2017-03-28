@@ -7,6 +7,7 @@
 Gear::Gear(PitchCurve *curve) 
   : m_curve(curve)
   , m_angle(0)
+  , m_brush(Qt::white)
 {
   updatePitchPath();
 }
@@ -23,7 +24,7 @@ void Gear::draw(QPainter &pa)
   rotoTranslate(pa);
 
   pa.setPen(QPen(Qt::blue, 2));
-  pa.setBrush(Qt::cyan);
+  pa.setBrush(m_brush);
   pa.drawPath(m_bodyPath);
 
   pa.setPen(QPen(Qt::magenta, 0, Qt::DotLine));
@@ -166,22 +167,16 @@ GearLink*  GearBox::addLink(GearLink*link)
   return link;
 }
 
-GearLink *GearBox::addLink(int a, int b)
-{
-  return GearBox::addLink(new GearLink(m_gears[a], m_gears[b]));
-}
-
-
 void GearBox::draw(QPainter &pa)
 {
   for(int i=0;i<m_links.count();i++) m_links[i]->update();
   pa.setPen(Qt::black);
-  pa.setBrush(Qt::yellow);
   for(int i=0;i<m_gears.count();i++)
   {
     Gear *gear = m_gears[i];
     pa.save();
     gear->rotoTranslate(pa);
+    pa.setBrush(gear->getBrush());
     pa.drawPath(gear->getBodyPath());
     pa.restore();
   }

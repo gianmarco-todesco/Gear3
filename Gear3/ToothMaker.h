@@ -13,7 +13,7 @@ public:
   struct Params {
     double pitchRadius;
     int toothCount;
-    double toothHeight;
+    double toothAddendum, toothDedendum;
   };
 
   CircularToothMaker() {}
@@ -26,7 +26,7 @@ private:
       return radius * QVector2D(cs + phi*sn, sn - phi*cs);
   }
 
-  void makeToothSide(QList<QPair<double, double> > &qs, double pitchRadius, double toothHeight);
+  void makeToothSide(QList<QPair<double, double> > &qs, double r0, double r1, double r2);
   void completeTooth(QList<QPair<double, double> > &qs, int toothCount);
 };
 

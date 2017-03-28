@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QList>
 #include <QString>
+#include <QElapsedTimer>
 
 class QMouseEvent;
 
@@ -34,6 +35,7 @@ class Page
   static QMap<QString, Page*> *m_pages;
   int m_width, m_height;
   double m_parameter;
+  QElapsedTimer m_clock;
 
 protected:
   QPoint m_firstMousePos, m_lastMousePos;
@@ -66,8 +68,11 @@ public:
   virtual void mouseMoveEvent(QMouseEvent*);
   virtual void mouseReleaseEvent(QMouseEvent*);
 
+  void resetTimer() { m_clock.start(); }
+
   virtual void drag(int dx, int dy, int modifiers);
 
+  int getTime() const { return m_clock.elapsed(); }
 };
 
 class PageManager {

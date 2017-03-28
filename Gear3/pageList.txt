@@ -1,11 +1,9 @@
-squareGears
-sandbox
-spiralGear
-ellipticGears2
-ellipticGear
-malteseCross
 involuteGears
 title
+squareGears
+malteseCross
+ellipticGear
+ellipticGears2
+spiralGear
 
-due
-tre
+sandbox

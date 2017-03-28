@@ -154,6 +154,7 @@ void PageManager::goToPage(int index)
     pannable->setScale(1.0);
     pannable->setPanOffset(QPointF(m_viewerSize.width()*0.5, m_viewerSize.height()*0.5));
   }
+  page->resetTimer();
   
   m_currentIndex = index;
 }
