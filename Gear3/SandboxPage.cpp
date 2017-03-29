@@ -420,8 +420,8 @@ public:
   bool onKey(int key) {
     return false;
   }
-  void drag(int dx, int dy, int modifier) {
-  }
+  //void drag(int dx, int dy, int modifier) {
+  //}
 } sandboxPage;
 
 void SandboxPage::draw(QPainter &pa)
@@ -432,38 +432,56 @@ void SandboxPage::draw(QPainter &pa)
   pp.moveTo(0,-500);pp.lineTo(0,500);
   pa.drawPath(pp);
 
-  double dist = 200.0;
+  double dist = 300.0;
   double r = dist*0.5;
   QList<QPair<double, double> > lst;
   lst.append(qMakePair(r,0.0));
   double phi0 = 0.0, phi1 = 0.0;
   double r0 = r, r1 = r;
   double ds = 1;
+  int off = 0;
   for(;;)
   {
-    double ra0 = r0 - 0.1;
+    double ra0 = r0 - 0.2;
     double ra1 = dist - ra0;
     phi0 -= acos((ra0*ra0+r0*r0-ds*ds)/(2.0*ra0*r0));
     phi1 += acos((ra1*ra1+r1*r1-ds*ds)/(2.0*ra1*r1));
     lst.push_back(qMakePair(ra1,phi1));
     lst.push_front(qMakePair(ra0,phi0));
+    off++;
     if(phi1-phi0>=M_PI/2) break;
     r0=ra0;
     r1=ra1;
   }
-
+  for(int i=1;i<lst.count();i++) { Q_ASSERT(lst[i-1].second < lst[i].second); }
   int n = lst.count();
-  for(int i=n-1;i>=0;i--) lst.append( qMakePair(lst[i].first, lst[n-1].second+lst[n-1].second-lst[i].second));
-  n = lst.count();
-  for(int i=n-1;i>=0;i--) lst.append( qMakePair(lst[i].first, lst[n-1].second+lst[n-1].second-lst[i].second));
-
-  pp = QPainterPath();
-  for(int i=0;i<lst.count();i++)
+  for(int i=n-2;i>=0;i--) 
   {
-    QPointF p = lst[i].first * QPointF(cos(lst[i].second), sin(lst[i].second));
-    if(i==0) pp.moveTo(p); else pp.lineTo(p);
+    Q_ASSERT(lst[n-1].second-lst[i].second>0.0);
+    lst.append( qMakePair(lst[i].first, lst[n-1].second+lst[n-1].second-lst[i].second));
+    Q_ASSERT(lst.back().second-lst[lst.count()-2].second>0.0);
+    
   }
-  pa.drawPath(pp);
+
+  for(int i=1;i<lst.count();i++) { Q_ASSERT(lst[i-1].second < lst[i].second); }
+  n = lst.count();
+  for(int i=n-2;i>=0;i--) lst.append( qMakePair(lst[i].first, lst[n-1].second+lst[n-1].second-lst[i].second));
+
+  for(int i=1;i<lst.count();i++) { Q_ASSERT(lst[i-1].second < lst[i].second); }
+
+  while(lst.back().second > lst[0].second + 2*M_PI) lst.pop_back();
+
+  for(int i=0;i<off;i++) 
+  {
+    lst[0].second += 2*M_PI; 
+    Q_ASSERT(lst[0].second>lst.back().second);
+    lst.push_back(lst[0]); 
+    lst.pop_front(); 
+  }
+  double dphi = -lst[0].second;
+  for(int i=0;i<lst.count();i++) lst[i].second += dphi;
+  while(lst.back().second>=2*M_PI) 
+    lst.pop_back();
 
   QVector<PitchCurve::Point> pts;
   for(int i=0;i<lst.count();i++)
@@ -473,6 +491,10 @@ void SandboxPage::draw(QPainter &pa)
     pt.r = lst[i].first;
     pt.pos = pt.r * QVector2D(cos(pt.phi), sin(pt.phi));
     pt.s = i==0 ? 0.0 : pts.back().s + (pts.back().pos-pt.pos).length();
+    if(i>0)
+    {
+      Q_ASSERT(pt.phi>pts.back().phi);
+    }
     pts.append(pt);
   }
   for(int i=0;i<pts.count();i++)
@@ -484,8 +506,30 @@ void SandboxPage::draw(QPainter &pa)
   }
 
   Gear *gear1 = new Gear(new PitchCurve(pts));
+  SimpleToothMaker::Params params;
+  params.toothCount = 30;
+  params.toothHeight = 15;
+  params.toothOffset = 0.25;
+  QVector<QVector2D> teethPts;
+  SimpleToothMaker().makeTeeth(teethPts, gear1->getCurve(), params);
+  gear1->setBodyPath(teethPts);
+  gear1->setBrush(Qt::cyan);
+
+  Gear *gear2 = new Gear(new PitchCurve(pts));
+  gear2->setBodyPath(teethPts);
+  gear2->setBrush(Qt::yellow);
+
+  GearLink link(gear1,gear2);
+  gear2->setPosition(-link.getDistance(), 0);
+
+  gear1->setAngle(getParameter()*0.01);
+  link.update();
+
   gear1->draw(pa);
+  gear2->draw(pa);
+
   delete gear1;
+  delete gear2;
 
 }
 
