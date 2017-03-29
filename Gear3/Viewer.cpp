@@ -149,6 +149,14 @@ void Viewer::keyPressEvent(QKeyEvent*e)
 {
   if(e->key() == Qt::Key_Down) m_pageMngr.goToNextPage();
   else if(e->key() == Qt::Key_Up) m_pageMngr.goToPrevPage();
+  else if(e->key() == Qt::Key_Escape) close();
+  else if(e->key() == Qt::Key_F11) 
+  {
+    if(isFullScreen())
+      setWindowState(windowState() & ~Qt::WindowFullScreen);
+    else
+      setWindowState(windowState() | Qt::WindowFullScreen);
+  }
   else 
   {
     if(!getCurrentPage()->onKey(e->key())) e->ignore();

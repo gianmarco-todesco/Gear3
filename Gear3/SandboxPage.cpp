@@ -13,6 +13,8 @@
 #include "ToothMaker.h"
 
 #include <QLineF>
+#include <QDebug>
+#include <QElapsedTimer>
 
 namespace {
 Gear *makeSpiralGear(int toothCount)
@@ -407,13 +409,19 @@ void Sandbox2Page::draw(QPainter &pa)
 }
 
 
-
 class SandboxPage : public Page, public Pannable {
-  
+  Gear *m_gear1, *m_gear2;
+  GearLink *m_link;
 public:
   SandboxPage() : Page("sandbox"){ 
-
+    m_gear1 = makeSquareSelfMatchingGear();
+    m_gear2 = makeSquareSelfMatchingGear();
+    m_gear1->setBrush(Qt::yellow);
+    m_gear2->setBrush(Qt::cyan);
+    m_link = new GearLink(m_gear1, m_gear2);
+    m_link->moveDriven(M_PI);
   }
+
   ~SandboxPage() {  }
 
   void draw(QPainter &pa);
@@ -431,6 +439,13 @@ void SandboxPage::draw(QPainter &pa)
   pp.moveTo(-500,0);pp.lineTo(500,0);
   pp.moveTo(0,-500);pp.lineTo(0,500);
   pa.drawPath(pp);
+
+  m_gear1->setAngle(getParameter()*0.01);
+  m_link->update();
+  m_gear1->draw(pa);
+  m_gear2->draw(pa);
+
+  /*
 
   double dist = 300.0;
   double r = dist*0.5;
@@ -530,7 +545,7 @@ void SandboxPage::draw(QPainter &pa)
 
   delete gear1;
   delete gear2;
-
+  */
 }
 
 /*

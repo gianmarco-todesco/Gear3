@@ -11,8 +11,10 @@ class QMouseEvent;
 class Pannable {
   QPointF m_pan;
   double m_scale;
+  double m_defaultScale;
+
 public:
-  Pannable() : m_scale(1.0), m_pan(0,0) {}
+  Pannable() : m_scale(1.0), m_pan(0,0), m_defaultScale(1.0) {}
   virtual ~Pannable() {}
 
   QPointF getPanOffset() const { return m_pan; }
@@ -27,6 +29,8 @@ public:
   void zoom(const QPoint &center, double scale);
   void zoom(int cx, int cy, double scale) { zoom(QPoint(cx,cy), scale); }
 
+  double getDefaultScale() const { return m_defaultScale; }
+  void setDefaultScale(double scale) { m_defaultScale = scale; }
 };
 
 class Page
@@ -36,6 +40,7 @@ class Page
   int m_width, m_height;
   double m_parameter;
   QElapsedTimer m_clock;
+  int m_elapsedTime;
 
 protected:
   QPoint m_firstMousePos, m_lastMousePos;
@@ -73,6 +78,8 @@ public:
   virtual void drag(int dx, int dy, int modifiers);
 
   int getTime() const { return m_clock.elapsed(); }
+  int getElapsedTime() const { return m_elapsedTime; }
+  void setElapsedTime(int time) { m_elapsedTime = time; }
 };
 
 class PageManager {
@@ -80,6 +87,7 @@ class PageManager {
   int m_currentIndex;
   QList<Page*> m_createdPages;
   QSize m_viewerSize;
+  QElapsedTimer m_frameClock;
   
 public:
   PageManager(const QString &fileName);

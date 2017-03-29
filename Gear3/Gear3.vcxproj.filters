@@ -107,6 +107,9 @@
     <ClCompile Include="SpiralPage.cpp">
       <Filter>Source Files\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="ImagePage.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="gear3.qrc">

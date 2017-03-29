@@ -1,5 +1,3 @@
-sandbox
-title
 squareGears
 involuteGears
 malteseCross
@@ -9,3 +7,8 @@ ellipticGears2
 spiral
 spiralGear
 
+title
+
+
+fig1
+sandbox

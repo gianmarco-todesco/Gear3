@@ -80,6 +80,7 @@ PageManager::PageManager(const QString &fileName)
   : m_currentIndex(0)
 {
   load(fileName);
+  m_frameClock.start();
 }
 
 PageManager::~PageManager()
@@ -138,6 +139,7 @@ void PageManager::tick()
 void PageManager::draw(QPainter &pa, int w, int h)
 {
   Page *page = getCurrentPage();
+  page->setElapsedTime(m_frameClock.restart());
   page->setWidth(w);
   page->setHeight(h);
   page->draw(pa);
@@ -151,10 +153,11 @@ void PageManager::goToPage(int index)
   Pannable *pannable = dynamic_cast<Pannable *>(page);
   if(pannable)
   {
-    pannable->setScale(1.0);
+    pannable->setScale(pannable->getDefaultScale());
     pannable->setPanOffset(QPointF(m_viewerSize.width()*0.5, m_viewerSize.height()*0.5));
   }
   page->resetTimer();
+  page->setElapsedTime(0);
   
   m_currentIndex = index;
 }

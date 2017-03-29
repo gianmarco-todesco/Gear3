@@ -115,12 +115,15 @@ void SimpleToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curv
   }
 }
 
+
+//=========================================================================================================
+
 void SquareToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curve, const Params &params)
 {
   double ds = curve->getLength() / params.toothCount;
 
   double y0 = -params.toothHeight * 0.5;
-  double y1 = y0 + params.toothHeight;
+  double y1 = y0 + params.toothHeight * 0.9;
 
   int ma = 5, mb = 10;
   double a = 0.2;
@@ -146,6 +149,8 @@ void SquareToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curv
   }    
 }
 
+
+//=========================================================================================================
 
 
 void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *crv)
