@@ -472,3 +472,22 @@ Gear *makeSquareSelfMatchingGear()
   return SelfMatchingGearBuilder().makeGear();
 }
 
+
+
+
+Gear *makeEllipticGear() 
+{
+  int toothCount = 19;
+  double radius = 100;
+  Gear *gear = new Gear(new PitchCurve(EllipseFunction(radius,0.6)));
+  SimpleToothMaker ctm;
+  SimpleToothMaker::Params params;
+  params.toothHeight = 20;
+  params.toothCount = toothCount;
+  
+  QVector<QVector2D> pts;
+  ctm.makeTeeth(pts, gear->getCurve(), params);
+
+  gear->setBodyPath(pts);
+  return gear;
+}

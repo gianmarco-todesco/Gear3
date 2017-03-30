@@ -19,9 +19,10 @@ class EllipsePage : public Page, public Pannable {
   int m_mode;
   QVector<QPointF> m_ticks; 
 public:
-  EllipsePage() : Page("ellipse"), m_a(300), m_b(200), m_mode(1) {
+  EllipsePage() : Page("ellipse"), m_a(300), m_b(200), m_mode(0) {
     m_f = sqrt(m_a*m_a-m_b*m_b);
     computeTicks();
+    setParameter(50);
   }
 
   ~EllipsePage() {  }
@@ -99,10 +100,12 @@ void EllipsePage::drawEllipse(QPainter &pa)
   
   
   QPainterPath pp;
+  /*
   pp.addEllipse(QPointF(0,0), m_a, m_b);
   for(int i=0;i<m_ticks.count();i++) 
     pp.addEllipse(m_ticks[i], 4,4);
   pa.drawPath(pp);
+  */
 
   pa.setBrush(Qt::NoBrush);
   pa.setPen(QPen(Qt::black, 3));

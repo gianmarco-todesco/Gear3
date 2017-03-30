@@ -95,7 +95,13 @@ QVector2D SpiralFunction::operator()(double t) const
   double phi = 2*M_PI*t; 
   double r = m_r0 * exp(t * log(m_r1/m_r0) );
   return r * QVector2D(cos(phi), sin(phi));
-  // return (m_r0 * (1-t) + m_r1 * t) * QVector2D(cos(phi), sin(phi));
+} 
+
+QVector2D ArchimedeanSpiralFunction::operator()(double t) const
+{ 
+  double phi = 2*M_PI*t; 
+  double r = m_r0 * (1-t) + m_r1 * t;
+  return r * QVector2D(cos(phi), sin(phi));
 } 
 
 

@@ -8,40 +8,36 @@
 #include "ToothMaker.h"
 #include "PitchCurve.h"
 
-Gear *makeEllipticGear2() 
-{
-  int toothCount = 19;
-  double radius = 100;
-  Gear *gear = new Gear(new PitchCurve(EllipseFunction(radius,0.6)));
-  SimpleToothMaker ctm;
-  SimpleToothMaker::Params params;
-  params.toothHeight = 20;
-  params.toothCount = toothCount;
-  params.toothOffset = 0.0;
-  
-  QVector<QVector2D> pts;
-  ctm.makeTeeth(pts, gear->getCurve(), params);
-
-  gear->setBodyPath(pts);
-  return gear;
-}
-
 class EllipticGears2Page : public Page, public Pannable {
   GearBox m_gearBox;
 public:
   EllipticGears2Page() : Page("ellipticGears2") { 
-    m_gearBox.addGear(makeEllipticGear2());
-    m_gearBox.addGear(makeEllipticGear2());
-    m_gearBox.addGear(makeEllipticGear2());
-    m_gearBox.addGear(makeEllipticGear2());
-    for(int i=1;i<m_gearBox.getGearCount();i++)
+    Gear *gear1 = m_gearBox.addGear(makeEllipticGear());
+    Gear *gear2 = m_gearBox.addGear(makeEllipticGear());
+    Gear *gear3 = m_gearBox.addGear(makeEllipticGear());
+    Gear *gear4 = m_gearBox.addGear(makeEllipticGear());
+    Gear *gear5 = m_gearBox.addGear(makeEllipticGear());
+    //Gear *gear6 = m_gearBox.addGear(makeEllipticGear());
+    gear1->setPosition(400,0);
+    double theta = M_PI*0.8;
+    m_gearBox.addLink(0,1)->moveDriven(theta);
+    m_gearBox.addLink(1,2)->moveDriven(-theta);
+    m_gearBox.addLink(2,3)->moveDriven(theta);
+    m_gearBox.addLink(3,4)->moveDriven(-theta);
+    //m_gearBox.addLink(4,5)->moveDriven(5*M_PI/3);
+/*
+    double dist = m_gearBox.getLink(0)->getDistance();
+    gear1->setPosition( 1.5*dist,0);
+    gear2->setPosition( 0.5*dist,0);
+    gear3->setPosition(-0.5*dist,0);
+    gear4->setPosition(-1.5*dist,0);
+    m_gearBox.getLink(3)->moveDriven(M_PI/3);
+  */  
+    for(int i=0;i<m_gearBox.getGearCount();i++)
     {
-      Gear *g1 = m_gearBox.getGear(i-1);
-      Gear *g2 = m_gearBox.getGear(i);
-      GearLink *link = new GearLink(g1,g2);
-      g2->setPosition(g1->getPosition() -  QPointF(link->getDistance(),0));
-      m_gearBox.addLink(link);
+      m_gearBox.getGear(i)->setBrush(Qt::cyan);
     }
+    setDefaultScale(0.8);
   }
 
   ~EllipticGears2Page() {  }
@@ -52,15 +48,11 @@ public:
 
 void EllipticGears2Page::draw(QPainter &pa)
 {
-  m_gearBox.getGear(0)->setAngle(getParameter()*0.01);
+  setParameter(getParameter() + 0.1*getElapsedTime());
+  m_gearBox.getGear(0)->setAngle(getParameter()*0.005);
 
   m_gearBox.draw(pa);
-  /*
-
-  GearLink(m_gearBox.getGear(0), m_gearBox.getGear(1), M_PI).update();
-  m_gearBox.getGear(0)->draw(pa);
-  m_gearBox.getGear(1)->draw(pa);
-  */
+ 
 
 }
 

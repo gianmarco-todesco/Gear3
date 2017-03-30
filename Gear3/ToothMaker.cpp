@@ -156,12 +156,25 @@ void SquareToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *curv
 void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *crv)
 {
   QList<QPointF> shape;
-  shape << QPointF(20,-20) << QPointF(5,20) << QPointF(-5,20) << QPointF(-20,-20);
+  //shape << QPointF(20,-20) << QPointF(5,20) << QPointF(-5,20) << QPointF(-20,-20);
 
+  int toothCount = 40;
+  double slope = 0.3;
+  double y0 = 10, y1 = 10;
+  double addendum = 7.5;
+
+  double ds = crv->getLength()/(2*toothCount);
+  double x0 = -ds*0.5, x1 = ds*0.5;
+
+  shape 
+    << QPointF(x0-slope*y0,-y0) 
+    << QPointF(x0+slope*y1,y1) 
+    << QPointF(x1-slope*y1,y1) 
+    << QPointF(x1+slope*y0,-y0); 
 
   ClipperWrapper cw;
  
-  int n = 10;
+  int n = toothCount;
   for(int k=0;k<n;k++)
   {
     double s0 = crv->getLength()*k/n;
@@ -179,7 +192,7 @@ void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *crv)
       QMatrix matrix;
       matrix.translate(pt.pos.x(), pt.pos.y());
       matrix.rotate(180.0*atan2(pt.right.y(), pt.right.x())/M_PI + 90);
-      matrix.translate(-s + s0,0);
+      matrix.translate(-s + s0 + 0.5*ds, 0);
       ps.add(matrix);
       QPolygonF polygon;
       for(int i=0;i<shape.count();i++) polygon.append(matrix.map(shape[i]));
@@ -198,7 +211,7 @@ void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *crv)
   for(int i=0;i<crv->getPointCount(); i++)
   {
     PitchCurve::Point pt = crv->getPoint(i);
-    bound.append((pt.pos + pt.right*20).toPointF());
+    bound.append((pt.pos + pt.right*addendum).toPointF());
   }
 
   cw.antiSubtract(bound);    

@@ -12,11 +12,21 @@
 
 class MalteseCrossPage : public Page, public Pannable {
   Gear *m_gear1, *m_gear2;
+  int m_flags;
+  double m_speed;
 public:
-  MalteseCrossPage() : Page("malteseCross") { 
+  MalteseCrossPage() : Page("malteseCross"), m_flags(0), m_speed(0) { 
   }
 
   ~MalteseCrossPage() {  }
+
+  void mousePressEvent(QMouseEvent*e) { Page::mousePressEvent(e); m_flags &= ~1; m_speed=0; }
+
+  bool onKey(int key) {
+    if(key==Qt::Key_P) m_flags ^=1; 
+    else return false;
+    return true;
+  }
 
   void draw(QPainter &pa);
 } titlePage;
@@ -24,7 +34,21 @@ public:
 
 void MalteseCrossPage::draw(QPainter &pa)
 {
+  pa.save();
+  pa.translate(-90,-90);
+
+
+  if(m_flags&1) m_speed = qMin(0.2, m_speed + 0.0005*getElapsedTime());
+  else m_speed = qMax(0.0, m_speed - 0.0005*getElapsedTime());
+ 
+  if(m_speed != 0.0) 
+    setParameter(getParameter() - m_speed*getElapsedTime());
+ 
   
+  //if(getParameter()>=2*M_PI) while(getParameter()>=2*M_PI) setParameter(getParameter() - 2*M_PI);
+  //else 
+  if(getParameter()>0) while(getParameter()>0) setParameter(getParameter() - 360);
+  else if(getParameter()<-360) while(getParameter()<-360) setParameter(getParameter() + 360);
 
   double r0 = 60, r1 = 200, d = 20;
   double q = r1-3*d;
@@ -106,6 +130,7 @@ void MalteseCrossPage::draw(QPainter &pa)
   pa.drawPath(pp);
   pa.restore();
 
+  pa.restore();
 }
 
 

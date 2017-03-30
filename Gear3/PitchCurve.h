@@ -41,6 +41,13 @@ public:
   QVector2D operator()(double t) const;
 };
 
+class ArchimedeanSpiralFunction : public CurveFunction {
+  double m_r0, m_r1;
+public:
+  ArchimedeanSpiralFunction(double r0, double r1) : m_r0(r0), m_r1(r1) {}
+  QVector2D operator()(double t) const;
+};
+
 
 //=============================================================================
 
@@ -63,6 +70,7 @@ public:
   ~PitchCurve();
 
   bool isOpen() const { return m_isOpen; }
+  
   double getLength() const { return m_length; }
   
   int getPointCount() const { return m_pts.count(); }
