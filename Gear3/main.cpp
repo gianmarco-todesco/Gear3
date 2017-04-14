@@ -2,12 +2,16 @@
 #include <QtGui/QApplication>
 #include <Phonon/VideoPlayer>
 #include <QUrl>
+#include <QFontDatabase>
+
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     using namespace Phonon;
+
+    int ret = QFontDatabase::addApplicationFont("ARHERMANN.ttf");
 
     Viewer w;
     w.show();

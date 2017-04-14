@@ -128,9 +128,12 @@ public:
 
   void drag(int dx, int dy, int modifiers) {
     Gear *gear = m_gearBox.getGear(0);
-    gear->setAngle(gear->getAngle() + dx * 0.01);
+    if(Qt::ShiftModifier & modifiers)
+      setParameter(getParameter() + dx * 0.01);
+    else
+      gear->setAngle(gear->getAngle() + dx * 0.01);
 
-    setParameter(getParameter() + dy * 0.01);
+    
   }
 
 

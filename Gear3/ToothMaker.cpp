@@ -161,7 +161,7 @@ void MagicToothMaker::makeTeeth(QVector<QVector2D> &pts, const PitchCurve *crv)
   int toothCount = 40;
   double slope = 0.3;
   double y0 = 10, y1 = 10;
-  double addendum = 7.5;
+  double addendum = 9.5;
 
   double ds = crv->getLength()/(2*toothCount);
   double x0 = -ds*0.5, x1 = ds*0.5;

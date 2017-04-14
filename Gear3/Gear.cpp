@@ -5,6 +5,14 @@
 #include <QDebug>
 #include <QElapsedTimer>
 
+#include <QFile>
+#include <QDataStream>
+
+
+void loadTeeth(const QString &fn, QVector<QVector2D> &pts);
+void saveTeeth(const QString &fn, const QVector<QVector2D> &pts);
+
+//=============================================================================
 
 Gear::Gear(PitchCurve *curve) 
   : m_curve(curve)
@@ -195,6 +203,20 @@ void GearBox::draw(QPainter &pa)
 
 }
 
+void GearBox::draw2(QPainter &pa)
+{
+  for(int i=0;i<m_links.count();i++) m_links[i]->update();
+  pa.setPen(Qt::black);
+  for(int i=0;i<m_gears.count();i++)
+  {
+    Gear *gear = m_gears[i];
+    pa.save();
+    gear->rotoTranslate(pa);
+    pa.setBrush(gear->getBrush());
+    pa.drawPath(gear->getBodyPath());
+    pa.restore();
+  }
+}
 
 
 //=============================================================================
@@ -233,7 +255,11 @@ Gear *makeCircularGear(int toothLength, int toothCount, int flag)
 
 
 class SelfMatchingGearBuilder {
+  double m_size;
+  int m_order;
 public:
+  SelfMatchingGearBuilder(int order, double size) : m_order(order), m_size(size) {}
+
   struct PolarPoint {
     double phi, radius;
     PolarPoint() : phi(0), radius(0) {}
@@ -244,21 +270,21 @@ public:
 
   double foobar(QList<PolarPoint> &polarPoints, double x, double y, int m);
 
-  void makeSeed1(QList<PolarPoint> &polarPoints, int &off);
+  //void makeSeed1(QList<PolarPoint> &polarPoints, int &off);
   void makeSeed2(QList<PolarPoint> &polarPoints, int &off);
-  void duplicate(QList<PolarPoint> &polarPoints);
+  void duplicate(QList<PolarPoint> &polarPoints, int count);
   void adjust(QList<PolarPoint> &polarPoints, int off);
 
   void createPitchCurvePoints(QVector<PitchCurve::Point> &pts, const QList<PolarPoint> &polarPoints);
   PitchCurve *createPitchCurve(const QList<PolarPoint> &polarPoints);
 
-  PitchCurve *buildPitchCurve1();
+  //PitchCurve *buildPitchCurve1();
   PitchCurve *buildPitchCurve2();
 
-  Gear *makeGear();
+  //Gear *makeGear();
 };
 
-
+/*
 void SelfMatchingGearBuilder::makeSeed1(QList<PolarPoint> &polarPoints, int &off)
 {
   double dist = 300.0;
@@ -290,7 +316,6 @@ void SelfMatchingGearBuilder::makeSeed1(QList<PolarPoint> &polarPoints, int &off
 }
 
 
-
 PitchCurve *SelfMatchingGearBuilder::buildPitchCurve1()
 {
   int off;
@@ -302,6 +327,8 @@ PitchCurve *SelfMatchingGearBuilder::buildPitchCurve1()
 
   return createPitchCurve(polarPoints);
 }
+*/
+
 
 double SelfMatchingGearBuilder::foobar(QList<PolarPoint> &polarPoints, double x, double ymax, int m)
 {
@@ -329,9 +356,9 @@ void SelfMatchingGearBuilder::makeSeed2(QList<PolarPoint> &polarPoints, int &off
 {
   QElapsedTimer clock;
   clock.start();
-  double theta = M_PI/4;
-  double x = 200;
-  double y = 10;
+  double theta = M_PI/m_order;
+  double x = m_size;
+  double y = 2;
   QList<PolarPoint> pts;
   double phi = foobar(pts, x,y,(int)y);
   Q_ASSERT(phi <= theta);
@@ -366,26 +393,28 @@ PitchCurve *SelfMatchingGearBuilder::buildPitchCurve2()
   int off;
   QList<PolarPoint> polarPoints;
   makeSeed2(polarPoints, off);
-  duplicate(polarPoints);
-  duplicate(polarPoints);
-  duplicate(polarPoints);
+  duplicate(polarPoints, 1);
+  duplicate(polarPoints, m_order-1);
   adjust(polarPoints, off);
 
   return createPitchCurve(polarPoints);
 }
 
 
-void SelfMatchingGearBuilder::duplicate(QList<PolarPoint> &polarPoints)
+void SelfMatchingGearBuilder::duplicate(QList<PolarPoint> &polarPoints, int count)
 {
   int n = polarPoints.count();
-  double phi0 = polarPoints.back().phi;
-  for(int i=n-2;i>=0;i--) 
+  for(int k=0;k<count;k++)
   {
-    double dphi = polarPoints[n-1].phi-polarPoints[i].phi;
-    Q_ASSERT(dphi>0.0);
-    double r = polarPoints[i].radius;
-    polarPoints.append( PolarPoint(phi0+dphi, r));
-    Q_ASSERT(polarPoints.back().phi > polarPoints[polarPoints.count()-2].phi);    
+    double phi0 = polarPoints.back().phi;
+    for(int i=n-2;i>=0;i--) 
+    {
+      double dphi = polarPoints[n-1].phi-polarPoints[i].phi;
+      Q_ASSERT(dphi>0.0);
+      double r = polarPoints[i].radius;
+      polarPoints.append( PolarPoint(phi0+dphi, r));
+      Q_ASSERT(polarPoints.back().phi > polarPoints[polarPoints.count()-2].phi);    
+    }
   }
   for(int i=1;i<polarPoints.count();i++) 
   { 
@@ -440,7 +469,7 @@ void SelfMatchingGearBuilder::createPitchCurvePoints(QVector<PitchCurve::Point> 
     QVector2D p1 = pts[(i+1)%pts.count()].pos;
     QVector2D p0 = pts[(i+pts.count()-1)%pts.count()].pos;
     QVector2D v = (p1-p0).normalized();
-    pts[i].right = QVector2D(-v.y(),v.x());
+    pts[i].right = - QVector2D(-v.y(),v.x());
   }
 }
 
@@ -451,27 +480,58 @@ PitchCurve *SelfMatchingGearBuilder::createPitchCurve(const QList<PolarPoint> &p
   return new PitchCurve(pts);
 }
 
-
+/*
 
 Gear *SelfMatchingGearBuilder::makeGear()
 {
   Gear *gear = new Gear(buildPitchCurve2());
+
+  / *
   SimpleToothMaker::Params params;
   params.toothCount = 70;
   params.toothHeight = 12;
   params.toothOffset = 0.25;
-  QVector<QVector2D> teethPts;
   SimpleToothMaker().makeTeeth(teethPts, gear->getCurve(), params);
+  * /
+
+  QVector<QVector2D> teethPts;
+  MagicToothMaker tm;
+  tm.makeTeeth(teethPts, gear->getCurve());
+
+
   gear->setBodyPath(teethPts);
   return gear;
 }
+*/
 
+void makeTeeth(Gear *gear, const QString &fn, bool load)
+{
+  QVector<QVector2D> teethPts;
+  if(load) loadTeeth(fn, teethPts);
+  else
+  {
+    MagicToothMaker tm;
+    tm.makeTeeth(teethPts, gear->getCurve());
+    saveTeeth(fn, teethPts);
+  }
+  gear->setBodyPath(teethPts);
+}
 
 Gear *makeSquareSelfMatchingGear()
 {
-  return SelfMatchingGearBuilder().makeGear();
+  SelfMatchingGearBuilder builder(4, 240.0);
+  Gear *gear = new Gear(builder.buildPitchCurve2());
+  makeTeeth(gear, "squareSelfMatchingGearTeeth.dat", true);
+  return gear;
 }
 
+Gear *makeOvalSelfMatchingGear()
+{
+  SelfMatchingGearBuilder builder(2, 100.0);
+  Gear *gear = new Gear(builder.buildPitchCurve2());
+  makeTeeth(gear, "ovalSelfMatchingGearTeeth.dat", true);
+  return gear;
+}
 
 
 
@@ -491,3 +551,27 @@ Gear *makeEllipticGear()
   gear->setBodyPath(pts);
   return gear;
 }
+
+
+//=============================================================================
+
+void loadTeeth(const QString &fn, QVector<QVector2D> &pts)
+{
+  QFile file("data\\" + fn);
+  file.open(QIODevice::ReadOnly);
+  QDataStream out(&file);
+  out >> pts;
+  file.close();
+}
+
+void saveTeeth(const QString &fn, const QVector<QVector2D> &pts)
+{ 
+  QFile file("data\\" + fn);
+  file.open(QIODevice::WriteOnly);
+  QDataStream out(&file);
+  out << pts;
+  file.close();
+}
+
+
+

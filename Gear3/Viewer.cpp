@@ -18,6 +18,7 @@ Viewer::Viewer(QWidget *parent)
 , m_pageMngr("pageList.txt")
 , m_timesRecord(100)
 , m_firstDraw(true)
+, m_showFps(false)
 {
   m_sandbox = new Sandbox();
   startTimer(40);
@@ -64,7 +65,7 @@ void Viewer::paintEvent(QPaintEvent*)
 
   if(pannable) { pa.restore(); getCurrentPage()->drawOverlay(pa); }
 
-  drawFps(pa);
+  if(m_showFps) drawFps(pa);
 
   int ms1 = timer1.elapsed();
   m_timesRecord.add(qMakePair(ms1,ms2));
@@ -157,6 +158,7 @@ void Viewer::keyPressEvent(QKeyEvent*e)
     else
       setWindowState(windowState() | Qt::WindowFullScreen);
   }
+  else if(e->key() == Qt::Key_F12) m_showFps = !m_showFps;
   else 
   {
     if(!getCurrentPage()->onKey(e->key())) e->ignore();

@@ -7,3 +7,5 @@ GeneratedFiles
 win32
 ipch
 Gear3/Gear3.vcxproj.user
+images
+data

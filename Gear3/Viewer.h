@@ -40,6 +40,7 @@ class Viewer : public QWidget
   QElapsedTimer m_timer;
   MyQueue<QPair<int,int> > m_timesRecord;
   bool m_firstDraw;
+  bool m_showFps;
 
 public:
   Viewer(QWidget *parent = 0);

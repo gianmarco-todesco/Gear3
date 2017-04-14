@@ -18,8 +18,9 @@ class EllipsePage : public Page, public Pannable {
   double m_f;
   int m_mode;
   QVector<QPointF> m_ticks; 
+  double m_tgParam;
 public:
-  EllipsePage() : Page("ellipse"), m_a(300), m_b(200), m_mode(0) {
+  EllipsePage() : Page("ellipse"), m_a(300), m_b(200), m_mode(0), m_tgParam(0) {
     m_f = sqrt(m_a*m_a-m_b*m_b);
     computeTicks();
     setParameter(50);
@@ -37,8 +38,8 @@ public:
 
   bool onKey(int key) {
     if(key == Qt::Key_1) {m_mode=0;}
-    else if(key == Qt::Key_2) {m_mode=1;}
-    else if(key == Qt::Key_3) {m_mode=2;}
+    else if(key == Qt::Key_2) {m_mode=1; m_tgParam = 0.0; }
+    else if(key == Qt::Key_3) {m_mode=2; m_tgParam = 1.0; }
     else return false;
     return true;
 
@@ -107,7 +108,7 @@ void EllipsePage::drawEllipse(QPainter &pa)
   pa.drawPath(pp);
   */
 
-  pa.setBrush(Qt::NoBrush);
+  pa.setBrush(QColor(210,240,255));
   pa.setPen(QPen(Qt::black, 3));
   pa.drawEllipse(QPointF(0,0), m_a, m_b);
 
@@ -136,7 +137,13 @@ void EllipsePage::drawEllipse(QPainter &pa)
   pa.drawEllipse(QPointF(-m_f,0),5,5);
   pa.drawEllipse(QPointF( m_f,0),5,5);
 
-
+  PitchCurve crv(CenteredEllipseFunction(m_a,m_b),200);
+  int m = 100;
+  for(int i=0;i<m;i++)
+  {
+    double s = crv.getLength() * i/m;
+    pa.drawLine(crv.getPosFromS(s,0).toPointF(), crv.getPosFromS(s,-10).toPointF()); 
+  }
 }
 
 
@@ -192,14 +199,20 @@ void EllipsePage::drawSegments(QPainter &pa, const QPointF &pc)
 
 void EllipsePage::drawTangent(QPainter &pa, double phi)
 {
+  if(m_tgParam<1.0) { m_tgParam = qMin(1.0, m_tgParam + getElapsedTime()*0.001); }
+
   double cs = cos(phi), sn = sin(phi);
   QPointF pc = QPointF(m_a*cs, m_b*sn);
-  QPointF dir = QPointF(-m_a*sn, m_b*cs);
-  pa.setPen(Qt::gray);
-
+  QPointF dir = QVector2D(-m_a*sn, m_b*cs).normalized().toPointF();
+  pa.setPen(QPen(QColor(80,80,80), 2));
+  
   QPointF f1(-m_f,0), f2(m_f,0);
-  QPointF p1 = -500*dir+pc, p2 = 500*dir+pc;
-  pa.drawLine(-500*dir+pc, 500*dir+pc);
+  double length = 500 * m_tgParam;
+  QPointF p1 = -length*dir+pc, p2 = length*dir+pc;
+  pa.drawLine(p1,p2);
+
+  // if(m_tgParam<0.5) return;
+  if(m_mode==2) return;
 
   if(QVector2D::dotProduct(QVector2D(p1-pc),QVector2D(f1-pc))<0) qSwap(p1,p2);
 
@@ -208,7 +221,8 @@ void EllipsePage::drawTangent(QPainter &pa, double phi)
   double r = 60;
   QRectF box(pc.x()-r,pc.y()-r,2*r,2*r);
   
-  QColor color(200,100,10,127);
+  QColor color(200,100,10,(int)(127*m_tgParam));
+  QColor color1(0,0,0,(int)(255*m_tgParam));
 
   double theta = atan(f1-pc);
   double dtheta = atan(p1-pc) - theta;
@@ -225,7 +239,7 @@ void EllipsePage::drawTangent(QPainter &pa, double phi)
   pp.arcMoveTo(box, -(int)(180.0*theta/M_PI));
   pp.arcTo(box, -(int)(180.0*theta/M_PI), -(int)(180.0*dtheta/M_PI));
   pa.setBrush(Qt::NoBrush);
-  pa.setPen(Qt::black);
+  pa.setPen(color1);
   pa.drawPath(pp);
 
   theta = atan(f2-pc);
@@ -246,7 +260,7 @@ void EllipsePage::drawTangent(QPainter &pa, double phi)
   pp.arcMoveTo(box, -(int)(180.0*theta/M_PI));
   pp.arcTo(box, -(int)(180.0*theta/M_PI), -(int)(180.0*dtheta/M_PI));
   pa.setBrush(Qt::NoBrush);
-  pa.setPen(Qt::black);
+  pa.setPen(color1);
   pa.drawPath(pp);
   
 

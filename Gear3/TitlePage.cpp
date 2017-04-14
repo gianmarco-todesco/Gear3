@@ -76,7 +76,7 @@ void TitlePage::draw(QPainter &pa)
   //pa.strokePath(pp, QPen(Qt::black, 2));
   
   m_gearBox.getGear(0)->setAngle(getTime() * 0.001);
-  m_gearBox.draw(pa);
+  m_gearBox.draw2(pa);
 }
 
 

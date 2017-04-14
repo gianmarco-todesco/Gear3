@@ -95,10 +95,14 @@ public:
       m_gear2 = makeSpiralGear(21); 
       m_gear1->setAngle(M_PI - m_gear1->getCurve()->getPhiFromS(m_gear1->getCurve()->getLength()/2));
       m_gear2->setAngle(-m_gear2->getCurve()->getPhiFromS(m_gear2->getCurve()->getLength()/2));
-      m_gear1->setPosition(300,100);
+
       m_link = new GearLink(m_gear1, m_gear2);
-      //m_gear2->setPosition(m_gear1->getPosition() + QPointF(-GearLink(m_gear1,m_gear2).getDistance(),0));
-      m_gear2->setPosition(m_gear1->getPosition() + QPointF(-400,0));
+
+      double dist = 400;
+      m_gear1->setPosition(dist/2,0);
+      m_gear2->setPosition(-dist/2,0);
+      //m_gear1->setPosition(300,100);
+      //m_gear2->setPosition(m_gear1->getPosition() + QPointF(-400,0));
 
   }
   ~SpiralGearsPage() { delete m_gear1; delete m_gear2; }

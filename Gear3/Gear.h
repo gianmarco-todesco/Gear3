@@ -84,10 +84,12 @@ public:
   GearLink *getLink(int index) const { return m_links.at(index); }
 
   virtual void draw(QPainter &pa);
+  virtual void draw2(QPainter &pa);
 };
 
 
 Gear *makeCircularGear(int toothLength, int toothCount, int flag = 0);
 Gear *makeSquareSelfMatchingGear();
+Gear *makeOvalSelfMatchingGear();
 
 Gear *makeEllipticGear();

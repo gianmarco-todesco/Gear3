@@ -83,6 +83,7 @@
     <ClCompile Include="EllipticGears2Page.cpp" />
     <ClCompile Include="EllipticGearPage.cpp" />
     <ClCompile Include="Gear.cpp" />
+    <ClCompile Include="GearBuilderPage.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_Viewer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -99,6 +100,7 @@
     <ClCompile Include="InvoluteGearsPage.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MalteseCrossPage.cpp" />
+    <ClCompile Include="OvalGearsPage.cpp" />
     <ClCompile Include="Page.cpp" />
     <ClCompile Include="PitchCurve.cpp" />
     <ClCompile Include="PolygonSweeper.cpp" />
@@ -106,6 +108,7 @@
     <ClCompile Include="SandboxPage.cpp" />
     <ClCompile Include="SpiralGearPage.cpp" />
     <ClCompile Include="SpiralPage.cpp" />
+    <ClCompile Include="SquareGearPage.cpp" />
     <ClCompile Include="SquareTeethGearsPage.cpp" />
     <ClCompile Include="TitlePage.cpp" />
     <ClCompile Include="ToothMaker.cpp" />

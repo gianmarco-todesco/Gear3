@@ -1,15 +1,33 @@
-
 title
-squareGears
+fig_italy
+fig_upfixes
+squareTeethGears
 involuteGears
 malteseCross
+fig_maltese_cross
 ellipse
 ellipticGear
 ellipticGears2
+ovalGears
+fig_oval_patent
+fig_fluxometer
+
+
 spiral
 spiralGear
 
+gearBuilder
 
 
-fig1
-sandbox
+squareGears
+fig_laser_cutter
+fig_gearify
+
+fig_cat1
+fig_cat2
+fig_cat3
+fig_cat4
+fig_cat5
+fig_cat6
+fig_cat7
+

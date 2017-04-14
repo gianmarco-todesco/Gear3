@@ -40,7 +40,7 @@ class SquareTeethGearPage : public Page, public Pannable {
 
 public:
   SquareTeethGearPage() 
-    : Page("squareGears")
+    : Page("squareTeethGears")
     , m_toothCount(9)
     , m_contact(false)
     , m_contactAngle(0.0)
